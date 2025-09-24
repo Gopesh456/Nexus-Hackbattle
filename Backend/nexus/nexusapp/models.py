@@ -24,6 +24,8 @@ class UserHealthProfile(models.Model):
 	allergies = models.JSONField(default=list, blank=True)
 	current_medications = models.JSONField(default=list, blank=True)
 	blood_group = models.CharField(max_length=10)
+	daily_calorie_goal = models.FloatField(default=2000.0, help_text="Daily calorie goal")
+	daily_protein_goal = models.FloatField(default=50.0, help_text="Daily protein goal in grams")
 	emergency_contact_name = models.CharField(max_length=255)
 	emergency_contact_relationship = models.CharField(max_length=100)
 	emergency_contact_phone = models.CharField(max_length=20)
@@ -32,7 +34,40 @@ class UserHealthProfile(models.Model):
 
 	def __str__(self):
 		return f"Health Profile - {self.user.username}"
-		return self.username
+
+
+class BloodTestReport(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='blood_test_report')
+	
+	# Complete Blood Count (CBC) parameters
+	hemoglobin = models.CharField(max_length=50, blank=True, help_text="Hemoglobin level (e.g., '13.5 g/dL')")
+	hematocrit = models.CharField(max_length=50, blank=True, help_text="Hematocrit percentage (e.g., '40%')")
+	wbc_count = models.CharField(max_length=50, blank=True, help_text="White Blood Cell count (e.g., '7.2 x10^3/µL')")
+	rbc_count = models.CharField(max_length=50, blank=True, help_text="Red Blood Cell count (e.g., '4.7 x10^6/µL')")
+	platelet_count = models.CharField(max_length=50, blank=True, help_text="Platelet count (e.g., '250 x10^3/µL')")
+	
+	# Red Blood Cell Indices
+	mcv = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Volume (e.g., '90 fL')")
+	mch = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Hemoglobin (e.g., '30 pg')")
+	mchc = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Hemoglobin Concentration (e.g., '33 g/dL')")
+	
+	# Differential Count
+	neutrophils = models.CharField(max_length=50, blank=True, help_text="Neutrophils percentage (e.g., '60%')")
+	lymphocytes = models.CharField(max_length=50, blank=True, help_text="Lymphocytes percentage (e.g., '30%')")
+	monocytes = models.CharField(max_length=50, blank=True, help_text="Monocytes percentage (e.g., '6%')")
+	eosinophils = models.CharField(max_length=50, blank=True, help_text="Eosinophils percentage (e.g., '3%')")
+	basophils = models.CharField(max_length=50, blank=True, help_text="Basophils percentage (e.g., '1%')")
+	
+	# Test metadata
+	test_date = models.DateField(blank=True, null=True, help_text="Date when the blood test was conducted")
+	lab_name = models.CharField(max_length=255, blank=True, help_text="Name of the laboratory")
+	doctor_name = models.CharField(max_length=255, blank=True, help_text="Name of the ordering physician")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Blood Test Report - {self.user.username}"
 
 
 class UserNutritionGoals(models.Model):
@@ -52,9 +87,20 @@ class UserNutritionGoals(models.Model):
 
 
 class FoodNutrition(models.Model):
+	UNIT_CHOICES = [
+		('g', 'grams'),
+		('kg', 'kilograms'), 
+		('oz', 'ounces'),
+		('lb', 'pounds'),
+		('cup', 'cups'),
+		('ml', 'milliliters'),
+		('l', 'liters')
+	]
+	
 	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='food_entries', null=True, blank=True)  # Link to authenticated user
 	food_name = models.CharField(max_length=255)
-	quantity = models.FloatField()  # in grams
+	quantity = models.FloatField()
+	unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default='g')
 	usda_food_id = models.CharField(max_length=100, null=True, blank=True)
 	
 	# Macronutrients (per 100g)
@@ -76,12 +122,26 @@ class FoodNutrition(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	
 	def __str__(self):
-		return f"{self.food_name} - {self.quantity}g"
+		return f"{self.food_name} - {self.quantity}{self.unit}"
+	
+	def convert_to_grams(self):
+		"""Convert quantity to grams based on unit"""
+		conversion_factors = {
+			'g': 1.0,
+			'kg': 1000.0,
+			'oz': 28.3495,
+			'lb': 453.592,
+			'cup': 240.0,  # Approximate for liquid
+			'ml': 1.0,     # Approximate for liquid foods
+			'l': 1000.0    # Approximate for liquid foods
+		}
+		return self.quantity * conversion_factors.get(self.unit, 1.0)
 	
 	def save(self, *args, **kwargs):
-		# Calculate total values based on quantity
+		# Calculate total values based on quantity converted to grams
 		if self.quantity and self.calories_per_100g:
-			multiplier = self.quantity / 100
+			quantity_in_grams = self.convert_to_grams()
+			multiplier = quantity_in_grams / 100
 			self.total_calories = self.calories_per_100g * multiplier
 			self.total_protein = (self.protein_per_100g or 0) * multiplier
 			self.total_carbs = (self.carbs_per_100g or 0) * multiplier

@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile
-from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer
+from .models import UserBasicData, UserHealthProfile, BloodTestReport
+from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
@@ -38,8 +38,7 @@ def login_user(request):
             'message': 'Login successful',
             'user': {
                 'id': user.id,
-                'username': user.username,
-                'email': user.email
+                'username': user.username
             },
             'tokens': str(refresh.access_token)
         })
@@ -61,8 +60,7 @@ def register_user(request):
             'message': 'User registered successfully',
             'user': {
                 'id': user.id,
-                'username': user.username,
-                'email': user.email
+                'username': user.username
             },
             'tokens': str(refresh.access_token)
         }, status=status.HTTP_201_CREATED)
@@ -194,7 +192,33 @@ def store_user_health_profile(request):
         serializer = UserHealthProfileSerializer(data=request_data)
     
     if serializer.is_valid():
-        serializer.save(user=user)
+        health_profile = serializer.save(user=user)
+        
+        # Sync nutrition goals with health profile calorie and protein goals
+        if hasattr(health_profile, 'daily_calorie_goal') and hasattr(health_profile, 'daily_protein_goal'):
+            try:
+                nutrition_goals, created = UserNutritionGoals.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'daily_calories_goal': health_profile.daily_calorie_goal,
+                        'daily_protein_goal': health_profile.daily_protein_goal,
+                        'daily_carbs_goal': 250.0,
+                        'daily_fat_goal': 65.0,
+                        'daily_fiber_goal': 25.0,
+                        'daily_sugar_goal': 50.0
+                    }
+                )
+                
+                if not created:
+                    # Update existing nutrition goals with health profile values
+                    nutrition_goals.daily_calories_goal = health_profile.daily_calorie_goal
+                    nutrition_goals.daily_protein_goal = health_profile.daily_protein_goal
+                    nutrition_goals.save()
+                    
+            except Exception as e:
+                # Continue even if nutrition goals sync fails
+                pass
+        
         return Response({
             'message': 'User health profile stored successfully'
         }, status=status.HTTP_200_OK)
@@ -240,10 +264,115 @@ def get_user_health_profile(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def store_blood_test_report(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Map the input field names to database field names
+    field_mapping = {
+        'Hemoglobin': 'hemoglobin',
+        'Hematocrit': 'hematocrit', 
+        'WBC Count': 'wbc_count',
+        'RBC Count': 'rbc_count',
+        'Platelet Count': 'platelet_count',
+        'MCV': 'mcv',
+        'MCH': 'mch',
+        'MCHC': 'mchc',
+        'Neutrophils': 'neutrophils',
+        'Lymphocytes': 'lymphocytes',
+        'Monocytes': 'monocytes',
+        'Eosinophils': 'eosinophils',
+        'Basophils': 'basophils'
+    }
+    
+    # Transform the request data to match database field names
+    transformed_data = request.data.copy()
+    for input_field, db_field in field_mapping.items():
+        if input_field in transformed_data:
+            transformed_data[db_field] = transformed_data.pop(input_field)
+    
+    # Check if user already has a blood test report
+    try:
+        blood_report = BloodTestReport.objects.get(user=user)
+        serializer = BloodTestReportSerializer(blood_report, data=transformed_data, partial=True)
+    except BloodTestReport.DoesNotExist:
+        serializer = BloodTestReportSerializer(data=transformed_data)
+    
+    if serializer.is_valid():
+        serializer.save(user=user)
+        return Response({
+            'message': 'Blood test report stored successfully'
+        }, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_blood_test_report(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        blood_report = BloodTestReport.objects.get(user=user)
+        serializer = BloodTestReportSerializer(blood_report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except BloodTestReport.DoesNotExist:
+        return Response({
+            'error': 'No blood test report found for this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def get_food_nutrition(request):
     """
     Get nutrition information for a food item from USDA API and store it for the authenticated user
-    Expected input: {"token": "jwt_token", "food_name": "apple", "quantity": 150}
+    Expected input: {"token": "jwt_token", "food_name": "apple", "quantity": 150, "unit": "g"}
+    Available units: g (grams), kg (kilograms), oz (ounces), lb (pounds), cup (cups), ml (milliliters), l (liters)
     """
     # Get token from request body
     token = request.data.get('token')
@@ -277,6 +406,7 @@ def get_food_nutrition(request):
     
     food_name = serializer.validated_data['food_name']
     quantity = serializer.validated_data['quantity']
+    unit = serializer.validated_data.get('unit', 'g')
     
     try:
         # Step 1: Search for the food item in USDA database
@@ -334,8 +464,18 @@ def get_food_nutrition(request):
             if nutrient not in nutrients:
                 nutrients[nutrient] = 0.0
         
-        # Step 4: Calculate nutrition for the specified quantity
-        multiplier = quantity / 100  # USDA data is per 100g
+        # Step 4: Calculate nutrition for the specified quantity (convert to grams first)
+        conversion_factors = {
+            'g': 1.0,
+            'kg': 1000.0,
+            'oz': 28.3495,
+            'lb': 453.592,
+            'cup': 240.0,  # Approximate for liquid
+            'ml': 1.0,     # Approximate for liquid foods
+            'l': 1000.0    # Approximate for liquid foods
+        }
+        quantity_in_grams = quantity * conversion_factors.get(unit, 1.0)
+        multiplier = quantity_in_grams / 100  # USDA data is per 100g
         total_nutrition = {
             'calories': round(nutrients['calories'] * multiplier, 2),
             'protein': round(nutrients['protein'] * multiplier, 2),
@@ -350,6 +490,7 @@ def get_food_nutrition(request):
             user=user,  # Associate with the authenticated user
             food_name=food_name,
             quantity=quantity,
+            unit=unit,
             usda_food_id=str(fdc_id),
             calories_per_100g=nutrients['calories'],
             protein_per_100g=nutrients['protein'],
@@ -363,7 +504,8 @@ def get_food_nutrition(request):
         response_data = {
             'food_name': food_name,
             'quantity': quantity,
-            'unit': 'grams',
+            'unit': unit,
+            'quantity_in_grams': quantity_in_grams,
             'nutrition_per_100g': nutrients,
             'total_nutrition': total_nutrition,
             'usda_food_name': nutrition_data.get('description', food_name),
@@ -471,17 +613,36 @@ def nutrition_goals(request):
     
     if action == 'get':
         try:
+            # First try to get goals from health profile
+            try:
+                health_profile = UserHealthProfile.objects.get(user=user)
+                calorie_goal = health_profile.daily_calorie_goal
+                protein_goal = health_profile.daily_protein_goal
+            except UserHealthProfile.DoesNotExist:
+                # Fallback to default values if no health profile
+                calorie_goal = 2000.0
+                protein_goal = 50.0
+            
+            # Get or create nutrition goals, using health profile values for calories and protein
             goals, created = UserNutritionGoals.objects.get_or_create(
                 user=user,
                 defaults={
-                    'daily_calories_goal': 2000.0,
-                    'daily_protein_goal': 50.0,
+                    'daily_calories_goal': calorie_goal,
+                    'daily_protein_goal': protein_goal,
                     'daily_carbs_goal': 250.0,
                     'daily_fat_goal': 65.0,
                     'daily_fiber_goal': 25.0,
                     'daily_sugar_goal': 50.0
                 }
             )
+            
+            # If nutrition goals exist but health profile has different values, update them
+            if not created and hasattr(user, 'health_profile'):
+                if goals.daily_calories_goal != calorie_goal or goals.daily_protein_goal != protein_goal:
+                    goals.daily_calories_goal = calorie_goal
+                    goals.daily_protein_goal = protein_goal
+                    goals.save()
+            
             serializer = UserNutritionGoalsSerializer(goals)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -566,18 +727,33 @@ def daily_nutrition_summary(request):
         # Get daily totals
         daily_totals = FoodNutrition.get_daily_totals(user, target_date)
         
-        # Get user's goals
+        # Get user's goals, prioritizing health profile values
+        try:
+            health_profile = UserHealthProfile.objects.get(user=user)
+            calorie_goal = health_profile.daily_calorie_goal
+            protein_goal = health_profile.daily_protein_goal
+        except UserHealthProfile.DoesNotExist:
+            calorie_goal = 2000.0
+            protein_goal = 50.0
+        
         goals, created = UserNutritionGoals.objects.get_or_create(
             user=user,
             defaults={
-                'daily_calories_goal': 2000.0,
-                'daily_protein_goal': 50.0,
+                'daily_calories_goal': calorie_goal,
+                'daily_protein_goal': protein_goal,
                 'daily_carbs_goal': 250.0,
                 'daily_fat_goal': 65.0,
                 'daily_fiber_goal': 25.0,
                 'daily_sugar_goal': 50.0
             }
         )
+        
+        # Update goals if health profile values are different
+        if not created and hasattr(user, 'health_profile'):
+            if goals.daily_calories_goal != calorie_goal or goals.daily_protein_goal != protein_goal:
+                goals.daily_calories_goal = calorie_goal
+                goals.daily_protein_goal = protein_goal
+                goals.save()
         
         # Calculate progress percentages
         consumed = {
