@@ -294,6 +294,95 @@ class JSONProcessorTool(BaseTool):
             "consultation": "Discuss with pharmacist or doctor for concerns"
         })
     
+class JSONProcessorTool(BaseTool):
+    name: str = "json_processor"
+    description: str = (
+        "Process stored prompts from JSON files and generate appropriate responses. "
+        "Reads prompt JSON files, analyzes the content, and generates healthcare responses, "
+        "recommendations, or analysis based on the stored prompt data."
+    )
+    args_schema: Type[BaseModel] = JSONProcessorToolInput
+
+    def _run(self, prompt_file: str) -> str:
+        """Process a stored prompt and generate response."""
+        try:
+            # Read the prompt JSON file
+            if not os.path.exists(prompt_file):
+                return f"Prompt file not found: {prompt_file}"
+            
+            with open(prompt_file, 'r', encoding='utf-8') as f:
+                prompt_data = json.load(f)
+            
+            prompt = prompt_data.get('prompt', '')
+            category = prompt_data.get('category', 'general')
+            prompt_id = prompt_data.get('id', '')
+            
+            # Generate response based on category
+            if category.lower() in ['health', 'medical', 'symptoms']:
+                response = self._process_health_prompt(prompt)
+            elif category.lower() in ['appointment', 'booking']:
+                response = self._process_appointment_prompt(prompt)
+            elif category.lower() in ['medication', 'medicine']:
+                response = self._process_medication_prompt(prompt)
+            else:
+                response = self._process_general_prompt(prompt)
+            
+            # Store the response
+            response_tool = JSONResponseTool()
+            response_result = response_tool._run(
+                response_data=response,
+                prompt_id=prompt_id,
+                response_type=category,
+                filename=f"response_{category}"
+            )
+            
+            # Update original prompt as processed
+            prompt_data['processed'] = True
+            prompt_data['processing_timestamp'] = datetime.datetime.now().isoformat()
+            
+            with open(prompt_file, 'w', encoding='utf-8') as f:
+                json.dump(prompt_data, f, indent=2, ensure_ascii=False)
+            
+            return f"Prompt processed successfully. {response_result}"
+            
+        except Exception as e:
+            return f"Error processing prompt: {str(e)}"
+    
+    def _process_health_prompt(self, prompt: str) -> str:
+        """Process health-related prompts."""
+        return json.dumps({
+            "analysis": "Health prompt analysis completed",
+            "recommendations": [
+                "Consult with healthcare provider for proper diagnosis",
+                "Monitor symptoms and keep a health diary",
+                "Maintain regular check-ups"
+            ],
+            "urgency_level": "medium",
+            "next_steps": "Schedule appointment if symptoms persist"
+        })
+    
+    def _process_appointment_prompt(self, prompt: str) -> str:
+        """Process appointment-related prompts."""
+        return json.dumps({
+            "appointment_status": "processing",
+            "available_slots": ["2024-10-01 10:00", "2024-10-01 14:00", "2024-10-02 09:00"],
+            "requirements": "Valid ID and insurance information",
+            "confirmation": "Appointment request received and being processed"
+        })
+    
+    def _process_medication_prompt(self, prompt: str) -> str:
+        """Process medication-related prompts."""
+        return json.dumps({
+            "medication_analysis": "Medication query processed",
+            "recommendations": [
+                "Follow prescribed dosage",
+                "Take with food if required",
+                "Monitor for side effects"
+            ],
+            "reminders": "Set up daily medication reminders",
+            "consultation": "Discuss with pharmacist or doctor for concerns"
+        })
+    
     def _process_general_prompt(self, prompt: str) -> str:
         """Process general prompts."""
         return json.dumps({
@@ -303,13 +392,99 @@ class JSONProcessorTool(BaseTool):
         })
 
 
+class HospitalSearchToolInput(BaseModel):
+    """Input schema for HospitalSearchTool."""
+    location: str = Field(default="VIT Vellore", description="Location to search for hospitals near")
+    specialty: str = Field(default="", description="Medical specialty to filter hospitals by (optional)")
+
+
+class HospitalSearchTool(BaseTool):
+    name: str = "hospital_search"
+    description: str = (
+        "Search for hospitals near a specific location using AI-powered web browsing. "
+        "Finds hospitals, their contact information, available specialists, ratings, "
+        "and other relevant healthcare facility details. Particularly useful for "
+        "finding emergency care, specialist consultations, and healthcare services."
+    )
+    args_schema: Type[BaseModel] = HospitalSearchToolInput
+
+    def _run(self, location: str = "VIT Vellore", specialty: str = "") -> str:
+        """Search for hospitals near the specified location."""
+        try:
+            # Get Groq API key
+            api_key = os.getenv('GROQ_API_KEY')
+            if not api_key:
+                return "Error: Groq API key not found in environment variables"
+
+            # Create Groq LLM instance
+            llm = ChatGroq(
+                model="meta-llama/llama-3.1-70b-versatile",
+                api_key=api_key,
+                temperature=0.3
+            )
+
+            # Build search task based on inputs
+            if specialty:
+                task = f"""
+                Search for hospitals near {location} that specialize in {specialty}.
+                Find and extract the following information for each hospital:
+                - Hospital name
+                - Address and location
+                - Contact phone number
+                - Available specialists/doctors in {specialty}
+                - Hospital rating/review score
+                - Emergency services availability
+                - Distance from {location}
+                - Website if available
+
+                Present the information in a clear, structured format.
+                Focus on the top 3-5 most relevant hospitals.
+                """
+            else:
+                task = f"""
+                Search for hospitals near {location}.
+                Find and extract the following information for each hospital:
+                - Hospital name
+                - Address and location
+                - Contact phone number
+                - Available medical specialties
+                - Hospital rating/review score
+                - Emergency services availability
+                - Distance from {location}
+                - Website if available
+
+                Present the information in a clear, structured format.
+                Focus on the top 3-5 most relevant hospitals.
+                """
+
+            # Create browser agent
+            agent = BrowserAgent(task=task, llm=llm)
+
+            # Run synchronously
+            result = agent.run_sync()
+
+            # Extract and format the result
+            if hasattr(result, 'final_result'):
+                return str(result.final_result())
+            elif hasattr(result, 'extracted_content'):
+                content = result.extracted_content()
+                if content:
+                    return str(content[-1]) if isinstance(content, list) else str(content)
+
+            return str(result)
+
+        except Exception as e:
+            return f"Error searching for hospitals: {str(e)}"
+
+
 # Create tool instances
 browser_tool = BrowserTool()
 web_search_tool = WebSearchTool()
 json_storage_tool = JSONStorageTool()
 json_response_tool = JSONResponseTool()
 json_processor_tool = JSONProcessorTool()
+hospital_search_tool = HospitalSearchTool()
 
 # Export tools for CrewAI
-tools = [browser_tool, web_search_tool, json_storage_tool, json_response_tool, json_processor_tool]
+tools = [browser_tool, web_search_tool, json_storage_tool, json_response_tool, json_processor_tool, hospital_search_tool]
 

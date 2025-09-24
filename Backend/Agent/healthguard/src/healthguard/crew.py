@@ -7,7 +7,8 @@ from typing import List
 from langchain_groq import ChatGroq
 from .tools.custom_tool import (
     BrowserTool, 
-    WebSearchTool
+    WebSearchTool,
+    HospitalSearchTool
 )
 
 
@@ -29,7 +30,7 @@ class Healthguard():
         return Agent(
             config=self.agents_config['nurse_agent'], 
             llm=self.groq_llm,
-            tools=[BrowserTool(), WebSearchTool()],
+            tools=[BrowserTool(), WebSearchTool(), HospitalSearchTool()],
             verbose=True
         )
 
