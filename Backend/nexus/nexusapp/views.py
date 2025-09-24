@@ -30,10 +30,7 @@ def login_user(request):
                     'username': user.username,
                     'email': user.email
                 },
-                'tokens': {
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh)
-                }
+                'tokens':  str(refresh.access_token)
             })
         else:
             return Response({'error': 'Invalid credentials'},
@@ -52,10 +49,7 @@ def register_user(request):
         return Response({
             'message': 'User registered successfully',
             'user_id': user.id,
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
+            'tokens': str(refresh.access_token),
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
