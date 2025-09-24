@@ -11,7 +11,6 @@ nurse_agent:
     and helps book appointments. It ensures user privacy and safety, 
     always reminding that it is not a replacement for professional medical advice. 
 
-
 med_agent:
   role: >
     Medication Management Assistant
