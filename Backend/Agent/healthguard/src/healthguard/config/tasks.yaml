@@ -25,14 +25,6 @@ nurse_task:
       "confirmation_message": "Your appointment with {doctor} has been successfully booked for {date} at {time}."
     } 
 
-get_prompt:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
-  expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
 
   med_task:
     description: >
@@ -62,7 +54,7 @@ get_prompt:
       JSON object with the following structure:
       {
         "medicine_name": "string",
-        "medicine_dosage": "string",
+        "medicine_ dosage": "string",
         "medicine_frequency": "string",
         "medicine_timing": ["string"],
         "medicine_quantity_available": "integer",
@@ -104,34 +96,115 @@ get_prompt:
 
   labs_task:
     description: >
-      You are a diligent lab results manager. Your task is to handle and interpret lab test results for users, ensuring they understand their health status and any necessary follow-up actions.
+      You are a specialized Lab Report Image Processor. When given a lab report image, you must extract ALL necessary data and provide a comprehensive JSON output.
 
-      Your responsibilities include:
+      Your core responsibilities:
 
-      1. Collecting lab test results from various medical laboratories.
+      1. **Image Analysis**: Process the uploaded lab report image using OCR technology:
+         - Extract all visible text from the image
+         - Handle various image qualities (scanned documents, phone photos, etc.)
+         - Support multiple formats (JPEG, PNG, TIFF, BMP, PDF)
+         - Apply image preprocessing for optimal text recognition
 
-      2. Interpreting the results accurately, identifying the specific tests performed and any abnormalities or areas of concern.
+      2. **Complete Data Extraction**: Identify and collect ALL available information:
+         - **Patient Information**: Name, age, gender, patient ID, contact details
+         - **Laboratory Details**: Lab name, address, contact information, report ID
+         - **Test Metadata**: Report date, collection date, received date, report type
+         - **ALL Lab Parameters**: Extract every single test parameter with its value and unit
+         - **Reference Ranges**: Normal ranges for each parameter
+         - **Doctor Information**: Ordering physician, reviewing pathologist
 
-      3. Extracting all relevant parameters and their corresponding values from the report for reliable storage, retrieval, and further medical use.
+      3. **Comprehensive Parameter Collection**: Extract ALL types of lab tests including:
+         - Complete Blood Count (CBC): Hemoglobin, Hematocrit, RBC, WBC, Platelets, MCV, MCH, MCHC, RDW
+         - Blood Chemistry: Glucose, Creatinine, BUN, Sodium, Potassium, Chloride, CO2, Calcium, Protein
+         - Lipid Profile: Total Cholesterol, HDL, LDL, Triglycerides, VLDL
+         - Liver Function: ALT, AST, Alkaline Phosphatase, Total Bilirubin, Direct Bilirubin, GGT
+         - Thyroid Function: TSH, Free T4, Free T3, Total T4, Total T3
+         - Cardiac Markers: Troponin, CK-MB, BNP, D-Dimer
+         - Inflammatory Markers: ESR, CRP, Procalcitonin
+         - Vitamins: Vitamin D, B12, Folate, Iron studies
+         - Hormones: Testosterone, Estrogen, Cortisol, Insulin
+         - Tumor Markers: PSA, CEA, CA-125, AFP
+         - Coagulation: PT, PTT, INR
+         - Urinalysis: Specific gravity, protein, glucose, ketones, blood, nitrites
+         - ANY OTHER PARAMETERS visible in the report
 
-      4.Communicating the results to the user in a clear and understandable manner, avoiding medical jargon.
+      4. **Medical Analysis**: Analyze all extracted values:
+         - Compare each parameter against its normal range
+         - Identify abnormal, borderline, and critical values
+         - Determine overall health status and severity
+         - Generate clinical interpretations in simple language
 
-      6. Providing recommendations for follow-up actions if necessary, such as consulting a specialist or scheduling further tests.
-
-      7. Documenting all lab results, interpretations, and recommendations in a structured JSON format for easy reference.
+      5. **Quality Assurance**: Ensure data accuracy:
+         - Cross-verify extracted values with visible text
+         - Flag any uncertain or unclear readings
+         - Provide confidence scores for extraction accuracy
+         - Include raw extracted text for verification
 
     expected_output: >
-      JSON object with the following structure:
+      Complete JSON object containing ALL extracted data:
       {
-        "lab_test_name": "string",
-        "lab_date_conducted": "string (yyyy-mm-dd)",
-        "lab_results": "object with parameter: value pairs",
-        "lab_normal_ranges": "object with parameter: normal_range pairs",
-        "interpretation_summary": "string",
-        "interpretation_abnormalities": ["string"],
-        "recommendation_date": "string (yyyy-mm-dd)",
-        "recommendation_action": "string",
-        "message": "Your lab results for {test_name} conducted on {date_conducted} have been reviewed. Please see the interpretation and recommendations above."
+        "lab_test_name": "string - Full name of the lab test/panel",
+        "lab_date_conducted": "string (yyyy-mm-dd) - Date when samples were collected",
+        "report_date": "string (yyyy-mm-dd) - Date when report was generated",
+        "patient_name": "string - Full patient name",
+        "patient_age": "integer - Patient age in years",
+        "patient_gender": "string - Male/Female/Other",
+        "patient_id": "string - Patient identification number",
+        "lab_name": "string - Name of the laboratory",
+        "lab_address": "string - Laboratory address",
+        "doctor_name": "string - Ordering physician name",
+        "report_id": "string - Lab report reference number",
+        "lab_results": {
+          "parameter_name_1": {
+            "value": "numeric_value",
+            "unit": "measurement_unit",
+            "status": "normal/abnormal/critical"
+          },
+          "parameter_name_2": {
+            "value": "numeric_value", 
+            "unit": "measurement_unit",
+            "status": "normal/abnormal/critical"
+          }
+        },
+        "lab_normal_ranges": {
+          "parameter_name_1": "normal_range_string",
+          "parameter_name_2": "normal_range_string"
+        },
+        "abnormal_values": [
+          {
+            "parameter": "parameter_name",
+            "value": "current_value",
+            "normal_range": "expected_range",
+            "severity": "abnormal/critical",
+            "clinical_significance": "brief_explanation"
+          }
+        ],
+        "critical_values": [
+          {
+            "parameter": "parameter_name",
+            "value": "current_value", 
+            "normal_range": "expected_range",
+            "immediate_action": "recommended_action"
+          }
+        ],
+        "interpretation_summary": "string - Overall health assessment summary",
+        "clinical_recommendations": [
+          "recommendation_1",
+          "recommendation_2",
+          "recommendation_3"
+        ],
+        "follow_up_required": "boolean - Whether follow-up is needed",
+        "urgency_level": "string - low/medium/high/critical",
+        "parameters_extracted": "integer - Total number of parameters found",
+        "extraction_confidence": "float - Confidence score (0.0-1.0)",
+        "raw_extracted_text": "string - Complete OCR text from image",
+        "processing_timestamp": "string (ISO datetime)",
+        "processing_notes": [
+          "note_1_about_extraction_quality",
+          "note_2_about_any_limitations"
+        ],
+        "message": "Lab report processed successfully. Extracted {parameters_extracted} parameters with {extraction_confidence}% confidence."
       }
 
     voice_task:
@@ -157,6 +230,18 @@ get_prompt:
           "assistance_details": "string",
           "interaction_summary": "string"
         }
+  food_task:
+    description: >
+      You are a helpful Food Diary assistant. Your role is to help users log their meals and analyze their nutritional intake. 
+      Your responsibilities include:
+      1. Identifying and recording food items from user inputs (typed or voice).
+      2. Estimating portion sizes and calculating total calories.
+      3. Breaking down macronutrients (carbs, protein, fat).
+      4. Comparing the meal’s nutrition with the user’s daily calorie and nutrition goals.
+      5. Providing clear and personalized feedback or health tips (e.g., suggest balance if carbs are too high).
+      6. Returning all information in a structured dictionary format, with no nested dictionaries.
+ 
+    
 
 
 
