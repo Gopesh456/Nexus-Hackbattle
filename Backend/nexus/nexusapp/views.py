@@ -239,20 +239,44 @@ def get_user_health_profile(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # Changed to require authentication
+@permission_classes([AllowAny])
 def get_food_nutrition(request):
     """
     Get nutrition information for a food item from USDA API and store it for the authenticated user
-    Expected input: {"food_name": "apple", "quantity": 150}
-    Headers: Authorization: Bearer <jwt_token>
+    Expected input: {"token": "jwt_token", "food_name": "apple", "quantity": 150}
     """
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
     serializer = FoodInputSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     food_name = serializer.validated_data['food_name']
     quantity = serializer.validated_data['quantity']
-    user = request.user  # Get the authenticated user from JWT token
     
     try:
         # Step 1: Search for the food item in USDA database
@@ -362,15 +386,39 @@ def get_food_nutrition(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # Changed to require authentication
+@permission_classes([AllowAny])
 def get_nutrition_history(request):
     """
     Get the history of stored nutrition data for the authenticated user
-    Headers: Authorization: Bearer <jwt_token>
-    Body: {} (empty JSON object for POST request)
+    Expected input: {"token": "jwt_token"}
     """
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
     try:
-        user = request.user  # Get the authenticated user from JWT token
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
         nutrition_records = FoodNutrition.objects.filter(user=user).order_by('-created_at')[:50]  # Latest 50 records for this user
         serializer = FoodNutritionSerializer(nutrition_records, many=True)
         return Response({
@@ -386,16 +434,39 @@ def get_nutrition_history(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def nutrition_goals(request):
     """
     POST: Get or set/update user's nutrition goals
-    Headers: Authorization: Bearer <jwt_token>
-    Body: 
-    - To get goals: {"action": "get"}
-    - To set/update goals: {"action": "set", "daily_calories_goal": 2500, "daily_protein_goal": 100, ...}
+    Expected input: 
+    - To get goals: {"token": "jwt_token", "action": "get"}
+    - To set/update goals: {"token": "jwt_token", "action": "set", "daily_calories_goal": 2500, "daily_protein_goal": 100, ...}
     """
-    user = request.user
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
     action = request.data.get('action', 'get')
     
     if action == 'get':
@@ -447,14 +518,37 @@ def nutrition_goals(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def daily_nutrition_summary(request):
     """
     Get daily nutrition summary with goals comparison
-    Headers: Authorization: Bearer <jwt_token>
-    Body: {"date": "YYYY-MM-DD"} (optional, defaults to today if not provided)
+    Expected input: {"token": "jwt_token", "date": "YYYY-MM-DD"} (date is optional, defaults to today if not provided)
     """
-    user = request.user
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
     
     try:
         # Parse date parameter or use today
