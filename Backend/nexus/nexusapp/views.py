@@ -2,7 +2,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -65,11 +65,12 @@ def register_user(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])  # Changed to require authentication
 def get_food_nutrition(request):
     """
-    Get nutrition information for a food item from USDA API and store it
+    Get nutrition information for a food item from USDA API and store it for the authenticated user
     Expected input: {"food_name": "apple", "quantity": 150}
+    Headers: Authorization: Bearer <jwt_token>
     """
     serializer = FoodInputSerializer(data=request.data)
     if not serializer.is_valid():
@@ -77,6 +78,7 @@ def get_food_nutrition(request):
     
     food_name = serializer.validated_data['food_name']
     quantity = serializer.validated_data['quantity']
+    user = request.user  # Get the authenticated user from JWT token
     
     try:
         # Step 1: Search for the food item in USDA database
@@ -145,8 +147,9 @@ def get_food_nutrition(request):
             'sugar': round(nutrients['sugar'] * multiplier, 2)
         }
         
-        # Step 5: Store in database
+        # Step 5: Store in database for the authenticated user
         food_nutrition = FoodNutrition.objects.create(
+            user=user,  # Associate with the authenticated user
             food_name=food_name,
             quantity=quantity,
             usda_food_id=str(fdc_id),
@@ -185,15 +188,18 @@ def get_food_nutrition(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])  # Changed to require authentication
 def get_nutrition_history(request):
     """
-    Get the history of stored nutrition data
+    Get the history of stored nutrition data for the authenticated user
+    Headers: Authorization: Bearer <jwt_token>
     """
     try:
-        nutrition_records = FoodNutrition.objects.all().order_by('-created_at')[:50]  # Latest 50 records
+        user = request.user  # Get the authenticated user from JWT token
+        nutrition_records = FoodNutrition.objects.filter(user=user).order_by('-created_at')[:50]  # Latest 50 records for this user
         serializer = FoodNutritionSerializer(nutrition_records, many=True)
         return Response({
+            'user': user.username,
             'count': nutrition_records.count(),
             'results': serializer.data
         }, status=status.HTTP_200_OK)

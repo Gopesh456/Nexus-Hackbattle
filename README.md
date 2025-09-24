@@ -96,10 +96,28 @@ python manage.py runserver
 ```
 Server will run at http://127.0.0.1:8000/
 
-## 📊 API Endpoints
+## � Authentication
+
+The API uses **JWT (JSON Web Token)** authentication. Users must register/login to access their personal food diary.
+
+## �📊 API Endpoints
+
+### Authentication Endpoints
+
+**POST /api/register/** - Register new user
+**POST /api/login/** - Login and get JWT tokens
+**POST /api/token/refresh/** - Refresh access token
+
+### Protected Endpoints (Require JWT Token)
 
 ### POST /api/nutrition/
-Get nutrition data for a food item.
+Get nutrition data for a food item and store it for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_access_token>
+Content-Type: application/json
+```
 
 **Request:**
 ```json
@@ -137,19 +155,41 @@ Get nutrition data for a food item.
 ```
 
 ### GET /api/nutrition/history/
-Get stored nutrition history (latest 50 records).
+Get authenticated user's food diary history (latest 50 records).
+
+**Headers:**
+```
+Authorization: Bearer <jwt_access_token>
+```
 
 ## 🖥 Frontend Integration
 
 ### Test Page
 Open `Frontend/test_nutrition_api.html` in your browser to test the API with a simple web interface.
 
-### React/Next.js Integration
+### React/Next.js Integration with JWT
 ```javascript
-const getNutritionData = async (foodName, quantity) => {
-    const response = await fetch('http://127.0.0.1:8000/api/nutrition/', {
+// Login and get JWT token
+const login = async (username, password) => {
+    const response = await fetch('http://127.0.0.1:8000/api/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+    const data = await response.json();
+    localStorage.setItem('access_token', data.tokens.access);
+    return data;
+};
+
+// Add food entry with authentication
+const getNutritionData = async (foodName, quantity) => {
+    const token = localStorage.getItem('access_token');
+    const response = await fetch('http://127.0.0.1:8000/api/nutrition/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ food_name: foodName, quantity })
     });
     return await response.json();
@@ -159,6 +199,7 @@ const getNutritionData = async (foodName, quantity) => {
 ## 🗄 Database Schema
 
 **FoodNutrition Model:**
+- user: ForeignKey to User (links entries to specific users)
 - food_name: CharField
 - quantity: FloatField
 - usda_food_id: CharField
@@ -168,7 +209,12 @@ const getNutritionData = async (foodName, quantity) => {
 
 ## 🧪 Testing
 
-### Test API Endpoints
+### Test JWT Authentication API
+```bash
+python test_jwt_api.py
+```
+
+### Test Basic API (Legacy)
 ```bash
 python test_api.py
 ```
@@ -179,16 +225,20 @@ python test_api.py
 3. Enter food name and quantity
 4. View nutrition results
 
-## 🔐 Security Notes
+## 🔐 Security Features
 
-- CORS configured for localhost:3000 (React/Next.js)
-- No authentication required for nutrition endpoints
-- USDA API key stored in environment variables
-- Input validation on food name and quantity
+- **JWT Authentication**: Secure token-based authentication
+- **User Data Isolation**: Each user can only access their own food entries
+- **Token Expiry**: Access tokens expire in 60 minutes for security
+- **Refresh Tokens**: 7-day refresh token lifecycle
+- **CORS Protection**: Configured for localhost:3000 (React/Next.js)
+- **USDA API Key**: Stored securely in environment variables
+- **Input Validation**: Server-side validation on all inputs
 
 ## 📚 Documentation
 
-- **API Documentation**: `Backend/nexus/API_DOCUMENTATION.md`
+- **JWT API Documentation**: `Backend/nexus/JWT_API_DOCUMENTATION.md` ⭐
+- **Legacy API Documentation**: `Backend/nexus/API_DOCUMENTATION.md`
 - **Database Models**: `Backend/nexus/nexusapp/models.py`
 - **API Views**: `Backend/nexus/nexusapp/views.py`
 

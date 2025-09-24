@@ -1,5 +1,6 @@
 
 from django.db import models
+from django.contrib.auth.models import User as AuthUser
 
 class User(models.Model):
 	username = models.CharField(max_length=150, unique=True)
@@ -12,6 +13,7 @@ class User(models.Model):
 
 
 class FoodNutrition(models.Model):
+	user = models.ForeignKey(AuthUser, on_delete=models.CASCADE, related_name='food_entries', null=True, blank=True)  # Link to authenticated user
 	food_name = models.CharField(max_length=255)
 	quantity = models.FloatField()  # in grams
 	usda_food_id = models.CharField(max_length=100, null=True, blank=True)

@@ -19,10 +19,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class FoodNutritionSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = FoodNutrition
         fields = '__all__'
-        read_only_fields = ('total_calories', 'total_protein', 'total_carbs', 
+        read_only_fields = ('user', 'username', 'total_calories', 'total_protein', 'total_carbs', 
                           'total_fat', 'total_fiber', 'total_sugar', 'created_at')
 
 
