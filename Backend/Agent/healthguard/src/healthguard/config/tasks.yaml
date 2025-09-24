@@ -8,64 +8,22 @@ nurse_task:
     5.Documenting the appointment details and summarizing it in a strcutured, clear, JSON format.
 
   expected_output: >
-   JSON array of objects with the following structure:
-{
-   "user_data": {
-    "name": "string",
-    "age": "integer",
-    "symptoms": ["string"],
-  
-},
-"assessment": {
-  "urgency_level": "string", 
-  
-},
-"nearest_hospital": {
-  "name": "string",
-  "address": "string",
-  "distance_km": "float"
-},
-"appointment": {
-  "status": "string",
-  "doctor": "string",
-  "department": "string",
-  "date": "string (yyyy-mm-dd)",
-  "time": "string (hh:mm AM/PM)",
-  "booking_id": "string"
-},
-"confirmation_message": "Your appointment with {doctor} has been successfully 
- booked for {date} at {time}.Your booking ID is {booking_id}."
-}
-
-  expected_output: >
-   JSON array of objects with the following structure:
-{
-   "user_data": {
-    "name": "string",
-    "age": "integer",
-    "symptoms": ["string"],
-  
-},
-"assessment": {
-  "urgency_level": "string", 
-  
-},
-"nearest_hospital": {
-  "name": "string",
-  "address": "string",
-  "distance_km": "float"
-},
-"appointment": {
-  "status": "string",
-  "doctor": "string",
-  "department": "string",
-  "date": "string (yyyy-mm-dd)",
-  "time": "string (hh:mm AM/PM)",
-  "booking_id": "string"
-},
-"confirmation_message": "Your appointment with {doctor} has been successfully 
- booked for {date} at {time}.Your booking ID is {booking_id}."
-} 
+    JSON object with the following structure:
+    {
+      "user_name": "string",
+      "user_age": "integer",
+      "user_symptoms": ["string"],
+      "assessment_urgency_level": "string",
+      "hospital_name": "string",
+      "hospital_address": "string",
+      "hospital_distance_km": "float",
+      "appointment_status": "string",
+      "appointment_doctor": "string",
+      "appointment_department": "string",
+      "appointment_date": "string (yyyy-mm-dd)",
+      "appointment_time": "string (hh:mm AM/PM)",
+      "confirmation_message": "Your appointment with {doctor} has been successfully booked for {date} at {time}."
+    } 
 
 get_prompt:
   description: >
@@ -75,3 +33,135 @@ get_prompt:
     A fully fledged report with the main topics, each with a full section of information.
     Formatted as markdown without '```'
   agent: reporting_analyst
+
+  med_task:
+    description: >
+     You are a virtual medical assistant specialized in helping patients manage their medicines. 
+
+     Your responsibilities are:
+
+      1. Collect all necessary medicine details from the user:
+         - Name of the medicine
+         - Dosage per intake (e.g., 1 tablet, 5 ml)
+         - Frequency of intake (e.g., 2 times per day, every 8 hours)
+         - Time(s) of day for intake (e.g., 8:00 AM, 8:00 PM)
+         - Total number of pills/tablets/syrup quantity available
+         - Special instructions (e.g., before food, after food)
+
+      2. Schedule **reminders** for the user at the correct times based on the frequency and timing of the medicine intake:
+         - Ensure reminders are clear and include dosage and any special instructions
+         - Confirm with the user that they have received and understood the reminders
+
+      3. Calculate the **restock date** for the medicine:
+         - Determine how long the current stock will last based on frequency and quantity
+         - Suggest the exact date when the user needs to buy more medicine
+
+      4.Document the medicine details, reminder schedule, and restock date in a clear, structured JSON format:
+
+    expected_output: >
+      JSON object with the following structure:
+      {
+        "medicine_name": "string",
+        "medicine_dosage": "string",
+        "medicine_frequency": "string",
+        "medicine_timing": ["string"],
+        "medicine_quantity_available": "integer",
+        "medicine_special_instructions": "string",
+        "reminder_medicine": "string",
+        "reminder_time": "string",
+        "reminder_dosage": "string",
+        "restock_date": "string (yyyy-mm-dd)",
+        "message": "Your stock of {medicine} will run out on {restock_date}. Please restock in advance."
+      }
+
+  guardian_task:
+    description: >
+      You are a vigilant health guardian. Your task is to monitor the user's health data continuously and identify any anomalies or potential health risks. 
+
+      Your responsibilities include:
+
+      1. Collecting and analyzing health data from various sources such as wearable devices, health apps, and manual inputs.
+
+      2. Identifying patterns and trends in the data that may indicate potential health issues.
+
+      3. Alerting the user promptly if any anomalies or risks are detected, providing clear and actionable advice on what steps to take next.
+
+      4. Documenting all findings, alerts, and recommendations in a structured JSON format for easy reference.
+
+    expected_output: >
+      JSON object with the following structure:
+      {
+        "health_data_sources": ["string"],
+        "health_key_metrics": "object with metric_name: value pairs",
+        "health_patterns_identified": ["string"],
+        "alert_date": "string (yyyy-mm-dd)",
+        "alert_time": "string (hh:mm AM/PM)",
+        "alert_issue_detected": "string",
+        "alert_advice": "string",
+        "recommendation_date": "string (yyyy-mm-dd)",
+        "recommendation_text": "string"
+      }
+
+  labs_task:
+    description: >
+      You are a diligent lab results manager. Your task is to handle and interpret lab test results for users, ensuring they understand their health status and any necessary follow-up actions.
+
+      Your responsibilities include:
+
+      1. Collecting lab test results from various medical laboratories.
+
+      2. Interpreting the results accurately, identifying the specific tests performed and any abnormalities or areas of concern.
+
+      3. Extracting all relevant parameters and their corresponding values from the report for reliable storage, retrieval, and further medical use.
+
+      4.Communicating the results to the user in a clear and understandable manner, avoiding medical jargon.
+
+      6. Providing recommendations for follow-up actions if necessary, such as consulting a specialist or scheduling further tests.
+
+      7. Documenting all lab results, interpretations, and recommendations in a structured JSON format for easy reference.
+
+    expected_output: >
+      JSON object with the following structure:
+      {
+        "lab_test_name": "string",
+        "lab_date_conducted": "string (yyyy-mm-dd)",
+        "lab_results": "object with parameter: value pairs",
+        "lab_normal_ranges": "object with parameter: normal_range pairs",
+        "interpretation_summary": "string",
+        "interpretation_abnormalities": ["string"],
+        "recommendation_date": "string (yyyy-mm-dd)",
+        "recommendation_action": "string",
+        "message": "Your lab results for {test_name} conducted on {date_conducted} have been reviewed. Please see the interpretation and recommendations above."
+      }
+
+    voice_task:
+      description: >
+        You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
+
+        Your responsibilities include:
+
+        1. Understanding and processing voice commands from users accurately.
+
+        2. Providing clear and concise responses to user queries, ensuring the information is easy to understand.
+
+        3. Assisting users with various tasks such as setting reminders, providing health tips, or answering health-related questions.
+
+        4. Documenting all interactions and responses in a structured JSON format for easy reference.
+
+      expected_output: >
+        JSON object with the following structure:
+        {
+          "user_command": "string",
+          "response": "string",
+          "assistance_task": "string",
+          "assistance_details": "string",
+          "interaction_summary": "string"
+        }
+
+
+
+
+
+
+
+
