@@ -1,0 +1,8 @@
+# Core CrewAI dependencies
+
+# LLM Integration
+langchain-groq
+
+# Additional dependencies for development and functionality
+pydantic>=2.0.0
+python-dotenv
