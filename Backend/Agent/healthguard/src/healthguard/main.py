@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 import sys
 import warnings
+import os
+
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env'))
 
 from healthguard.crew import Healthguard
 
@@ -13,9 +21,107 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+def run_single_agent(agent_name: str):
+    """
+    Run a single agent by name.
+    """
+    inputs = {
+        'user_name': 'John Doe',
+        'user_age': 35,
+        'user_symptoms': ['fever', 'cough', 'headache'],
+        'medicine_name': 'Paracetamol',
+        'medicine_dosage': '500mg',
+        'medicine_frequency': '3 times per day',
+        'medicine_timing': ['8:00 AM', '2:00 PM', '8:00 PM'],
+        'medicine_quantity_available': 30,
+        'medicine_special_instructions': 'Take with food',
+        'lab_test_name': 'Blood Test',
+        'lab_date_conducted': '2024-09-20',
+        'health_data_sources': ['Fitbit', 'Manual input'],
+        'health_key_metrics': {'heart_rate': 75, 'blood_pressure': '120/80'},
+        'user_command': 'Set a reminder for medication',
+        'current_year': str(datetime.now().year)
+    }
+
+    try:
+        result = Healthguard().run_single_agent(agent_name=agent_name, inputs=inputs)
+        print(f"Agent '{agent_name}' execution completed successfully!")
+        print(f"Result: {result}")
+        return result
+
+    except Exception as e:
+        raise Exception(f"An error occurred while running agent '{agent_name}': {e}")
+        
+        
+
+def interactive_agent_selection():
+    """
+    Interactive mode to let user select which agent to run.
+    """
+    print("HealthGuard Agent Selection")
+    print("=" * 40)
+    print("Available Agents:")
+    print("1. Nurse Agent - Book appointments and assess symptoms")
+    print("2. Medication Agent - Manage medicines and reminders")
+    print("3. Labs Agent - Handle lab test results and reports")
+    print("4. Guardian Agent - Health monitoring and alerts")
+    print("5. Voice Agent - Voice-based health assistance")
+    print("6. Run Full Crew - Execute all agents together")
+    print("0. Exit")
+    print("=" * 40)
+
+    while True:
+        try:
+            choice = input("Select an agent (0-6): ").strip()
+
+            if choice == "0":
+                print("Goodbye!")
+                return
+
+            elif choice == "1":
+                print("\n Running Nurse Agent...")
+                run_single_agent("nurse")
+                break
+
+            elif choice == "2":
+                print("\n Running Medication Agent...")
+                run_single_agent("med")
+                break
+
+            elif choice == "3":
+                print("\n Running Labs Agent...")
+                run_single_agent("labs")
+                break
+
+            elif choice == "4":
+                print("\n Running Guardian Agent...")
+                run_single_agent("guardian")
+                break
+
+            elif choice == "5":
+                print("\n Running Voice Agent...")
+                run_single_agent("voice")
+                break
+
+            elif choice == "6":
+                print("\n Running Full Crew...")
+                run()
+                break
+
+            else:
+                print(" Invalid choice. Please select 0-6.")
+
+        except KeyboardInterrupt:
+            print("\n\nGoodbye!")
+            return
+        except Exception as e:
+            print(f" Error: {e}")
+            return
+
+
 def run():
     """
-    Run the crew.
+    Run the full crew.
     """
     inputs = {
         'user_name': 'John Doe',
@@ -43,8 +149,6 @@ def run():
 
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
-        
-        
 
 
 def train():
@@ -118,17 +222,23 @@ def test():
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage:")
-        print("  python main.py run                    # Run the crew")
-        print("  python main.py train <n_iterations> <filename>  # Train the crew")
-        print("  python main.py test <n_iterations> <eval_llm>   # Test the crew")
-        print("  python main.py replay <task_id>       # Replay from a specific task")
-        sys.exit(1)
+        print("🏥 HealthGuard - No arguments provided, starting interactive mode...")
+        interactive_agent_selection()
+        sys.exit(0)
 
     command = sys.argv[1].lower()
 
     if command == "run":
         run()
+    elif command == "interactive":
+        interactive_agent_selection()
+    elif command == "run_agent":
+        if len(sys.argv) != 3:
+            print("Usage: python main.py run_agent <agent_name>")
+            print("Available agents: nurse, med, labs, guardian, voice")
+            sys.exit(1)
+        agent_name = sys.argv[2].lower()
+        run_single_agent(agent_name)
     elif command == "train":
         if len(sys.argv) != 4:
             print("Usage: python main.py train <n_iterations> <filename>")
@@ -146,5 +256,12 @@ if __name__ == "__main__":
         replay()
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: run, train, test, replay")
+        print("Available commands:")
+        print("  python main.py                        # Interactive agent selection")
+        print("  python main.py run                    # Run the full crew")
+        print("  python main.py interactive            # Interactive agent selection")
+        print("  python main.py run_agent <agent_name> # Run a single agent (nurse, med, labs, guardian, voice)")
+        print("  python main.py train <n_iterations> <filename>  # Train the crew")
+        print("  python main.py test <n_iterations> <eval_llm>   # Test the crew")
+        print("  python main.py replay <task_id>       # Replay from a specific task")
         sys.exit(1)

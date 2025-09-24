@@ -22,11 +22,8 @@ nurse_task:
       "appointment_department": "string",
       "appointment_date": "string (dd-mm-yyyy)",
       "appointment_time": "string (hh:mm AM/PM)",
-      "confirmation_message": "Your appointment with {doctor} has been successfully booked for {date} at {time}."
-    } 
-
-  
-
+      "confirmation_message": "Your appointment has been successfully booked. Please check the details above."
+    }
 
 med_task:
   description: >
@@ -64,8 +61,7 @@ med_task:
       "reminder_medicine": "string",
       "reminder_time": "string",
       "reminder_dosage": "string",
-      "restock_date": "string (yyyy-mm-dd)",
-      "message": "Your stock of {medicine} will run out on {restock_date}. Please restock in advance."
+      "restock_date": "string (yyyy-mm-dd)"
     }
 
 guardian_task:
@@ -85,7 +81,6 @@ guardian_task:
   expected_output: >
     JSON object with the following structure:
     {
-      "health_data_sources": ["string"],
       "health_key_metrics": "object with metric_name: value pairs",
       "health_patterns_identified": ["string"],
       "alert_date": "string (yyyy-mm-dd)",
@@ -121,38 +116,32 @@ labs_task:
       "lab_date_conducted": "string (yyyy-mm-dd)",
       "lab_results": "object with parameter: value pairs",
       "lab_normal_ranges": "object with parameter: normal_range pairs",
-      "interpretation_summary": "string",
       "interpretation_abnormalities": ["string"],
       "recommendation_date": "string (yyyy-mm-dd)",
       "recommendation_action": "string",
-      "message": "Your lab results for {test_name} conducted on {date_conducted} have been reviewed. Please see the interpretation and recommendations above."
+      "message": "Your lab results for {lab_test_name} conducted on {lab_date_conducted} have been reviewed. Please see the interpretation and recommendations above."
     }
 
 voice_task:
-    description: >
-      You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
+  description: >
+    You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
 
-      Your responsibilities include:
+    Your responsibilities include:
 
-      1. Understanding and processing voice commands from users accurately.
+    1. Understanding and processing voice commands from users accurately.
 
-      2. Providing clear and concise responses to user queries, ensuring the information is easy to understand.
+    2. Providing clear and concise responses to user queries, ensuring the information is easy to understand.
 
-      3. Assisting users with various tasks such as setting reminders, providing health tips, or answering health-related questions.
+    3. Assisting users with various tasks such as setting reminders, providing health tips, or answering health-related questions.
 
-      4. Documenting all interactions and responses in a structured JSON format for easy reference.
+    4. Documenting all interactions and responses in a structured JSON format for easy reference.
 
-    expected_output: >
-      JSON object with the following structure:
-      {
-        "user_command": "string",
-        "response": "string",
-        "assistance_task": "string",
-        "assistance_details": "string",
-        "interaction_summary": "string"
-      }
-
-
-
-
-
+  expected_output: >
+    JSON object with the following structure:
+    {
+      "user_command": "string",
+      "response": "string",
+      "assistance_task": "string",
+      "assistance_details": "string",
+      "interaction_summary": "string"
+    }

@@ -20,7 +20,7 @@ class Healthguard():
 
     def __init__(self) -> None:
         self.groq_llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
+            model="groq/llama-3.3-70b-versatile",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
@@ -118,3 +118,28 @@ class Healthguard():
             verbose=True,
             # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
         )
+
+    def run_single_agent(self, agent_name: str, inputs: dict):
+        """Run a single agent by name"""
+        agent_map = {
+            'nurse': (self.nurse_agent(), self.nurse_task()),
+            'med': (self.med_agent(), self.med_task()),
+            'labs': (self.labs_agent(), self.labs_task()),
+            'guardian': (self.guardian_agent(), self.guardian_task()),
+            'voice': (self.voice_agent(), self.voice_task())
+        }
+
+        if agent_name not in agent_map:
+            raise ValueError(f"Unknown agent: {agent_name}. Available agents: {list(agent_map.keys())}")
+
+        agent, task = agent_map[agent_name]
+
+        # Create a crew with just this agent and task
+        single_crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=True
+        )
+
+        return single_crew.kickoff(inputs=inputs)
