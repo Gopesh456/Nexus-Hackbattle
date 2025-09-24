@@ -1,0 +1,17 @@
+{
+  "response_id": "processed_20250924_162503",
+  "prompt_id": "test_health_20250924_162502",
+  "timestamp": "2025-09-24T16:25:03.010607",
+  "response_type": "health",
+  "response_data": {
+    "analysis": "Health prompt analysis completed",
+    "recommendations": [
+      "Consult with healthcare provider for proper diagnosis",
+      "Monitor symptoms and keep a health diary",
+      "Maintain regular check-ups"
+    ],
+    "urgency_level": "medium",
+    "next_steps": "Schedule appointment if symptoms persist"
+  },
+  "status": "completed"
+}

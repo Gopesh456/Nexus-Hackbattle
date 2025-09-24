@@ -4,9 +4,14 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 
-
 from langchain_groq import ChatGroq
-
+from .tools.custom_tool import (
+    BrowserTool, 
+    WebSearchTool,
+    JSONStorageTool,
+    JSONResponseTool,
+    JSONProcessorTool
+)
 
 
 @CrewBase
@@ -16,37 +21,93 @@ class Healthguard():
     agents: List[BaseAgent]
     tasks: List[Task]
 
+    def __init__(self) -> None:
+        self.groq_llm = ChatGroq(
+            model="meta-llama/llama-3.1-70b-versatile",
+            api_key=os.getenv("GROQ_API_KEY")
+        )
 
     @agent
     def nurse_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['nurse_agent'], 
-            llm=ChatGroq(model="groq/llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY"))
-
-        )
-
-    @agent
-    def reporting_analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config['reporting_analyst'], # type: ignore[index]
+            llm=self.groq_llm,
+            tools=[BrowserTool(), WebSearchTool()],
             verbose=True
         )
 
-    # To learn more about structured task outputs,
-    # task dependencies, and task callbacks, check out the documentation:
-    # https://docs.crewai.com/concepts/tasks#overview-of-a-task
-    @task
-    def research_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['research_task'], # type: ignore[index]
+    @agent
+    def med_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['med_agent'],
+            llm=self.groq_llm,
+            tools=[BrowserTool(), WebSearchTool()],
+            verbose=True
+        )
+
+    @agent
+    def labs_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['labs_agent'],
+            llm=self.groq_llm,
+            tools=[BrowserTool(), WebSearchTool()],
+            verbose=True
+        )
+
+    @agent
+    def guardian_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['guardian_agent'],
+            llm=self.groq_llm,
+            tools=[JSONStorageTool(), JSONResponseTool(), JSONProcessorTool(), BrowserTool()],
+            verbose=True
+        )
+
+    @agent
+    def voice_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['voice_agent'],
+            llm=self.groq_llm,
+            tools=[WebSearchTool()],
+            verbose=True
         )
 
     @task
-    def reporting_task(self) -> Task:
+    def nurse_task(self) -> Task:
         return Task(
-            config=self.tasks_config['reporting_task'], # type: ignore[index]
-            output_file='report.md'
+            config=self.tasks_config['nurse_task'],
+            agent=self.nurse_agent()
         )
+
+    @task
+    def med_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['med_task'],
+            agent=self.med_agent()
+        )
+
+    @task
+    def labs_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['labs_task'],
+            agent=self.labs_agent()
+        )
+
+    @task
+    def guardian_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['guardian_task'],
+            agent=self.guardian_agent()
+        )
+
+    @task
+    def voice_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['voice_task'],
+            agent=self.voice_agent()
+        )
+
+
 
     @crew
     def crew(self) -> Crew:

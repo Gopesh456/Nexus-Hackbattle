@@ -20,7 +20,9 @@ crewai install
 ```
 ### Customizing
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+**Add your `GROQ_API_KEY` into the `.env` file**
+
+The project now uses Groq's meta-llama/llama-3.1-70b-versatile model for browser automation and web search tools. Get your API key from [Groq Console](https://console.groq.com/)
 
 - Modify `src/healthguard/config/agents.yaml` to define your agents
 - Modify `src/healthguard/config/tasks.yaml` to define your tasks
