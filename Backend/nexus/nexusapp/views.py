@@ -4,7 +4,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
-from .models import User, UserBasicData
+from django.contrib.auth.models import User
+from .models import UserBasicData
 from .serializers import UserSerializer, UserBasicDataSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -20,16 +21,12 @@ def login_user(request):
         return Response({'error': 'Please provide both username and password'},
                       status=status.HTTP_400_BAD_REQUEST)
     
-    try:
-        # Find user with matching username and password
-        user = User.objects.get(username=username, password=password)
-        
-        # Create a custom JWT token with user ID
-        from rest_framework_simplejwt.tokens import AccessToken
-        token = AccessToken()
-        token['user_id'] = user.id
-        token['username'] = user.username
-        
+    # Use Django's built-in authenticate function
+    user = authenticate(username=username, password=password)
+    
+    if user:
+        # Create JWT token
+        refresh = RefreshToken.for_user(user)
         return Response({
             'message': 'Login successful',
             'user': {
@@ -37,10 +34,9 @@ def login_user(request):
                 'username': user.username,
                 'email': user.email
             },
-            'tokens': str(token)
+            'tokens': str(refresh.access_token)
         })
-        
-    except User.DoesNotExist:
+    else:
         return Response({'error': 'Invalid credentials'},
                       status=status.HTTP_401_UNAUTHORIZED)
 
@@ -51,16 +47,17 @@ def register_user(request):
     if serializer.is_valid():
         user = serializer.save()
         
-        # Create a custom JWT token with user ID
-        from rest_framework_simplejwt.tokens import AccessToken
-        token = AccessToken()
-        token['user_id'] = user.id
-        token['username'] = user.username
+        # Create JWT token using Django's built-in User
+        refresh = RefreshToken.for_user(user)
         
         return Response({
             'message': 'User registered successfully',
-            'user': serializer.data,
-            'tokens': str(token)
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            },
+            'tokens': str(refresh.access_token)
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -80,17 +77,10 @@ def store_user_basic_data(request):
         jwt_auth = JWTAuthentication()
         validated_token = jwt_auth.get_validated_token(token)
         
-        # Get user ID from token
-        user_id = validated_token.get('user_id')
-        if not user_id:
-            return Response({
-                'error': 'Invalid token - no user ID found'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
         
-        # Get our custom user
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
+        if not user:
             return Response({
                 'error': 'User not found'
             }, status=status.HTTP_404_NOT_FOUND)
@@ -130,17 +120,10 @@ def get_user_basic_data(request):
         jwt_auth = JWTAuthentication()
         validated_token = jwt_auth.get_validated_token(token)
         
-        # Get user ID from token
-        user_id = validated_token.get('user_id')
-        if not user_id:
-            return Response({
-                'error': 'Invalid token - no user ID found'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
         
-        # Get our custom user
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
+        if not user:
             return Response({
                 'error': 'User not found'
             }, status=status.HTTP_404_NOT_FOUND)

@@ -1,5 +1,6 @@
 
 from django.contrib import admin
-from .models import User
+from .models import UserBasicData
 
-admin.site.register(User)
+# Register only our custom models (User is already registered by Django)
+admin.site.register(UserBasicData)
