@@ -12,6 +12,22 @@ class User(models.Model):
 		return self.username
 
 
+class UserNutritionGoals(models.Model):
+	"""Store user's daily nutrition goals"""
+	user = models.OneToOneField(AuthUser, on_delete=models.CASCADE, related_name='nutrition_goals')
+	daily_calories_goal = models.FloatField(default=2000.0, help_text="Daily calorie goal")
+	daily_protein_goal = models.FloatField(default=50.0, help_text="Daily protein goal in grams")
+	daily_carbs_goal = models.FloatField(default=250.0, help_text="Daily carbohydrates goal in grams")
+	daily_fat_goal = models.FloatField(default=65.0, help_text="Daily fat goal in grams")
+	daily_fiber_goal = models.FloatField(default=25.0, help_text="Daily fiber goal in grams")
+	daily_sugar_goal = models.FloatField(default=50.0, help_text="Daily sugar goal in grams")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	
+	def __str__(self):
+		return f"{self.user.username}'s Nutrition Goals"
+
+
 class FoodNutrition(models.Model):
 	user = models.ForeignKey(AuthUser, on_delete=models.CASCADE, related_name='food_entries', null=True, blank=True)  # Link to authenticated user
 	food_name = models.CharField(max_length=255)
@@ -50,3 +66,28 @@ class FoodNutrition(models.Model):
 			self.total_fiber = (self.fiber_per_100g or 0) * multiplier
 			self.total_sugar = (self.sugar_per_100g or 0) * multiplier
 		super().save(*args, **kwargs)
+	
+	@classmethod
+	def get_daily_totals(cls, user, date=None):
+		"""Calculate total nutrition for a user on a specific date"""
+		from datetime import date as dt_date
+		if date is None:
+			date = dt_date.today()
+		
+		# Get all food entries for the user on the specified date
+		entries = cls.objects.filter(
+			user=user,
+			created_at__date=date
+		)
+		
+		totals = {
+			'total_calories': sum(entry.total_calories or 0 for entry in entries),
+			'total_protein': sum(entry.total_protein or 0 for entry in entries),
+			'total_carbs': sum(entry.total_carbs or 0 for entry in entries),
+			'total_fat': sum(entry.total_fat or 0 for entry in entries),
+			'total_fiber': sum(entry.total_fiber or 0 for entry in entries),
+			'total_sugar': sum(entry.total_sugar or 0 for entry in entries),
+			'entries_count': entries.count()
+		}
+		
+		return totals

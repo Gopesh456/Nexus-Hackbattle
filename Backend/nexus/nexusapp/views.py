@@ -6,9 +6,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.conf import settings
-from .serializers import UserSerializer, FoodInputSerializer, FoodNutritionSerializer
-from .models import FoodNutrition
+from .serializers import UserSerializer, FoodInputSerializer, FoodNutritionSerializer, UserNutritionGoalsSerializer, DailyNutritionSummarySerializer
+from .models import FoodNutrition, UserNutritionGoals
 from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import date, datetime
 import requests
 import json
 
@@ -187,12 +188,13 @@ def get_food_nutrition(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])  # Changed to require authentication
 def get_nutrition_history(request):
     """
     Get the history of stored nutrition data for the authenticated user
     Headers: Authorization: Bearer <jwt_token>
+    Body: {} (empty JSON object for POST request)
     """
     try:
         user = request.user  # Get the authenticated user from JWT token
@@ -206,6 +208,156 @@ def get_nutrition_history(request):
     except Exception as e:
         return Response({
             'error': 'Failed to retrieve nutrition history',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def nutrition_goals(request):
+    """
+    POST: Get or set/update user's nutrition goals
+    Headers: Authorization: Bearer <jwt_token>
+    Body: 
+    - To get goals: {"action": "get"}
+    - To set/update goals: {"action": "set", "daily_calories_goal": 2500, "daily_protein_goal": 100, ...}
+    """
+    user = request.user
+    action = request.data.get('action', 'get')
+    
+    if action == 'get':
+        try:
+            goals, created = UserNutritionGoals.objects.get_or_create(
+                user=user,
+                defaults={
+                    'daily_calories_goal': 2000.0,
+                    'daily_protein_goal': 50.0,
+                    'daily_carbs_goal': 250.0,
+                    'daily_fat_goal': 65.0,
+                    'daily_fiber_goal': 25.0,
+                    'daily_sugar_goal': 50.0
+                }
+            )
+            serializer = UserNutritionGoalsSerializer(goals)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': 'Failed to retrieve nutrition goals',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    elif action == 'set':
+        try:
+            goals, created = UserNutritionGoals.objects.get_or_create(user=user)
+            serializer = UserNutritionGoalsSerializer(goals, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                action_result = "created" if created else "updated"
+                return Response({
+                    'message': f'Nutrition goals {action_result} successfully',
+                    'goals': serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response({
+                'error': 'Failed to update nutrition goals',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    else:
+        return Response({
+            'error': 'Invalid action. Use "get" or "set"'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def daily_nutrition_summary(request):
+    """
+    Get daily nutrition summary with goals comparison
+    Headers: Authorization: Bearer <jwt_token>
+    Body: {"date": "YYYY-MM-DD"} (optional, defaults to today if not provided)
+    """
+    user = request.user
+    
+    try:
+        # Parse date parameter or use today
+        date_param = request.data.get('date')
+        if date_param:
+            try:
+                target_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({
+                    'error': 'Invalid date format. Use YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            target_date = date.today()
+        
+        # Get daily totals
+        daily_totals = FoodNutrition.get_daily_totals(user, target_date)
+        
+        # Get user's goals
+        goals, created = UserNutritionGoals.objects.get_or_create(
+            user=user,
+            defaults={
+                'daily_calories_goal': 2000.0,
+                'daily_protein_goal': 50.0,
+                'daily_carbs_goal': 250.0,
+                'daily_fat_goal': 65.0,
+                'daily_fiber_goal': 25.0,
+                'daily_sugar_goal': 50.0
+            }
+        )
+        
+        # Calculate progress percentages
+        consumed = {
+            'calories': round(daily_totals['total_calories'], 2),
+            'protein': round(daily_totals['total_protein'], 2),
+            'carbohydrates': round(daily_totals['total_carbs'], 2),
+            'fat': round(daily_totals['total_fat'], 2),
+            'fiber': round(daily_totals['total_fiber'], 2),
+            'sugar': round(daily_totals['total_sugar'], 2)
+        }
+        
+        goals_dict = {
+            'calories': goals.daily_calories_goal,
+            'protein': goals.daily_protein_goal,
+            'carbohydrates': goals.daily_carbs_goal,
+            'fat': goals.daily_fat_goal,
+            'fiber': goals.daily_fiber_goal,
+            'sugar': goals.daily_sugar_goal
+        }
+        
+        progress = {}
+        for nutrient in consumed.keys():
+            goal_value = goals_dict[nutrient]
+            consumed_value = consumed[nutrient]
+            if goal_value > 0:
+                progress[f"{nutrient}_percentage"] = round((consumed_value / goal_value) * 100, 1)
+                progress[f"{nutrient}_remaining"] = round(max(0, goal_value - consumed_value), 2)
+            else:
+                progress[f"{nutrient}_percentage"] = 0
+                progress[f"{nutrient}_remaining"] = 0
+        
+        summary_data = {
+            'date': target_date,
+            'consumed': consumed,
+            'goals': goals_dict,
+            'progress': progress,
+            'entries_count': daily_totals['entries_count']
+        }
+        
+        return Response({
+            'user': user.username,
+            'summary': summary_data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Failed to generate daily nutrition summary',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

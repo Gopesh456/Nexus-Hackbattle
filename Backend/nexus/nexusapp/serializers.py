@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import FoodNutrition
+from .models import FoodNutrition, UserNutritionGoals
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,3 +38,25 @@ class NutritionResponseSerializer(serializers.Serializer):
     quantity = serializers.FloatField()
     nutrition_data = serializers.DictField()
     total_nutrition = serializers.DictField()
+
+
+class UserNutritionGoalsSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = UserNutritionGoals
+        fields = [
+            'id', 'username', 'daily_calories_goal', 'daily_protein_goal',
+            'daily_carbs_goal', 'daily_fat_goal', 'daily_fiber_goal',
+            'daily_sugar_goal', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'username', 'created_at', 'updated_at']
+
+
+class DailyNutritionSummarySerializer(serializers.Serializer):
+    """Serializer for daily nutrition summary with goals"""
+    date = serializers.DateField()
+    consumed = serializers.DictField()
+    goals = serializers.DictField()
+    progress = serializers.DictField()
+    entries_count = serializers.IntegerField()
