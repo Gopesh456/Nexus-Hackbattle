@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Nutrition Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #007bff;
+            margin-top: 20px;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .nutrition-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .nutrition-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .nutrition-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .food-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍎 Food Nutrition Tracker</h1>
+        
+        <form id="nutritionForm">
+            <div class="form-group">
+                <label for="foodName">Food Name:</label>
+                <input 
+                    type="text" 
+                    id="foodName" 
+                    placeholder="e.g., apple, banana, chicken breast"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="quantity">Quantity (grams):</label>
+                <input 
+                    type="number" 
+                    id="quantity" 
+                    placeholder="e.g., 150"
+                    min="0.1"
+                    step="0.1"
+                    required
+                >
+            </div>
+            
+            <button type="submit" id="submitBtn">Get Nutrition Information</button>
+        </form>
+        
+        <div id="loading" class="loading" style="display: none;">
+            🔄 Fetching nutrition data from USDA...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="results" class="success" style="display: none;">
+            <div id="foodInfo" class="food-info"></div>
+            <div id="nutritionGrid" class="nutrition-grid"></div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <h3>📋 API Usage Example</h3>
+            <p><strong>Endpoint:</strong> <code>POST /api/nutrition/</code></p>
+            <p><strong>Request Body:</strong></p>
+            <pre style="background: #e9ecef; padding: 10px; border-radius: 3px; overflow-x: auto;">
+{
+    "food_name": "apple",
+    "quantity": 150
+}
+            </pre>
+            <p><strong>Note:</strong> Make sure to get your USDA API key from <a href="https://fdc.nal.usda.gov/api-guide.html" target="_blank">USDA FoodData Central</a> and add it to your .env file.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+        
+        document.getElementById('nutritionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const foodName = document.getElementById('foodName').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/nutrition/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        food_name: foodName,
+                        quantity: quantity
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Failed to get nutrition data');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Network error. Make sure the Django server is running.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+        
+        function displayResults(data) {
+            // Display food information
+            document.getElementById('foodInfo').innerHTML = `
+                <h3>${data.food_name} (${data.quantity}g)</h3>
+                <p><strong>USDA Food:</strong> ${data.usda_food_name}</p>
+                <p><strong>Stored ID:</strong> ${data.stored_id}</p>
+            `;
+            
+            // Display nutrition grid
+            const nutrition = data.total_nutrition;
+            document.getElementById('nutritionGrid').innerHTML = `
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.calories}</div>
+                    <div class="nutrition-label">Calories</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.protein}g</div>
+                    <div class="nutrition-label">Protein</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.carbohydrates}g</div>
+                    <div class="nutrition-label">Carbohydrates</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.fat}g</div>
+                    <div class="nutrition-label">Fat</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.fiber}g</div>
+                    <div class="nutrition-label">Fiber</div>
+                </div>
+                <div class="nutrition-item">
+                    <div class="nutrition-value">${nutrition.sugar}g</div>
+                    <div class="nutrition-label">Sugar</div>
+                </div>
+            `;
+            
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
