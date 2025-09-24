@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import UserBasicData
-from .serializers import UserSerializer, UserBasicDataSerializer
+from .models import UserBasicData, UserHealthProfile
+from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -140,4 +140,93 @@ def get_user_basic_data(request):
     except UserBasicData.DoesNotExist:
         return Response({
             'error': 'No basic data found for this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def store_user_health_profile(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Handle emergency_contact nested data
+    request_data = request.data.copy()
+    emergency_contact = request_data.pop('emergency_contact', None)
+    if emergency_contact:
+        request_data['emergency_contact_name'] = emergency_contact.get('name', '')
+        request_data['emergency_contact_relationship'] = emergency_contact.get('relationship', '')
+        request_data['emergency_contact_phone'] = emergency_contact.get('phone', '')
+    
+    # Check if user already has health profile
+    try:
+        health_profile = UserHealthProfile.objects.get(user=user)
+        serializer = UserHealthProfileSerializer(health_profile, data=request_data, partial=True)
+    except UserHealthProfile.DoesNotExist:
+        serializer = UserHealthProfileSerializer(data=request_data)
+    
+    if serializer.is_valid():
+        serializer.save(user=user)
+        return Response({
+            'message': 'User health profile stored successfully'
+        }, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_user_health_profile(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        health_profile = UserHealthProfile.objects.get(user=user)
+        serializer = UserHealthProfileSerializer(health_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except UserHealthProfile.DoesNotExist:
+        return Response({
+            'error': 'No health profile found for this user'
         }, status=status.HTTP_404_NOT_FOUND)
