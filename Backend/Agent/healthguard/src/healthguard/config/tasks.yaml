@@ -1,13 +1,43 @@
-research_task:
+nurse_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    You are a nurse. You have to book an appointment by :
+    1.Collecting the symptoms from the user.
+    2.Asessing the severity of the symptoms (low, high, emergency).
+    3.Identifying the most suitable specialist according to the symptoms.
+    4.Always finding and directing the patient to a hospital nearby , having the required speciality doctor.
+    5.Documenting the appointment details and summarizing it in a strcutured, clear, JSON format.
 
-reporting_task:
+  expected_output: >
+   JSON array of objects with the following structure:
+{
+   "user_data": {
+    "name": "string",
+    "age": "integer",
+    "symptoms": ["string"],
+  
+},
+"assessment": {
+  "urgency_level": "string", 
+  
+},
+"nearest_hospital": {
+  "name": "string",
+  "address": "string",
+  "distance_km": "float"
+},
+"appointment": {
+  "status": "string",
+  "doctor": "string",
+  "department": "string",
+  "date": "string (yyyy-mm-dd)",
+  "time": "string (hh:mm AM/PM)",
+  "booking_id": "string"
+},
+"confirmation_message": "Your appointment with {doctor} has been successfully 
+ booked for {date} at {time}.Your booking ID is {booking_id}."
+} 
+
+get_prompt:
   description: >
     Review the context you got and expand each topic into a full section for a report.
     Make sure the report is detailed and contains any and all relevant information.
