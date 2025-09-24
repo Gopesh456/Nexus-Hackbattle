@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserBasicData, UserHealthProfile
+from .models import FoodNutrition, UserNutritionGoals
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,3 +56,50 @@ class UserHealthProfileSerializer(serializers.ModelSerializer):
             validated_data['emergency_contact_relationship'] = emergency_contact.get('relationship', instance.emergency_contact_relationship)
             validated_data['emergency_contact_phone'] = emergency_contact.get('phone', instance.emergency_contact_phone)
         return super().update(instance, validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+
+class FoodNutritionSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = FoodNutrition
+        fields = '__all__'
+        read_only_fields = ('user', 'username', 'total_calories', 'total_protein', 'total_carbs', 
+                          'total_fat', 'total_fiber', 'total_sugar', 'created_at')
+
+
+class FoodInputSerializer(serializers.Serializer):
+    food_name = serializers.CharField(max_length=255)
+    quantity = serializers.FloatField(min_value=0.1)
+
+
+class NutritionResponseSerializer(serializers.Serializer):
+    food_name = serializers.CharField()
+    quantity = serializers.FloatField()
+    nutrition_data = serializers.DictField()
+    total_nutrition = serializers.DictField()
+
+
+class UserNutritionGoalsSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = UserNutritionGoals
+        fields = [
+            'id', 'username', 'daily_calories_goal', 'daily_protein_goal',
+            'daily_carbs_goal', 'daily_fat_goal', 'daily_fiber_goal',
+            'daily_sugar_goal', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'username', 'created_at', 'updated_at']
+
+
+class DailyNutritionSummarySerializer(serializers.Serializer):
+    """Serializer for daily nutrition summary with goals"""
+    date = serializers.DateField()
+    consumed = serializers.DictField()
+    goals = serializers.DictField()
+    progress = serializers.DictField()
+    entries_count = serializers.IntegerField()
