@@ -7,10 +7,7 @@ from typing import List
 from langchain_groq import ChatGroq
 from .tools.custom_tool import (
     BrowserTool, 
-    WebSearchTool,
-    JSONStorageTool,
-    JSONResponseTool,
-    JSONProcessorTool
+    WebSearchTool
 )
 
 
@@ -23,7 +20,7 @@ class Healthguard():
 
     def __init__(self) -> None:
         self.groq_llm = ChatGroq(
-            model="meta-llama/llama-3.1-70b-versatile",
+            model="llama-3.3-70b-versatile",
             api_key=os.getenv("GROQ_API_KEY")
         )
 
@@ -41,7 +38,7 @@ class Healthguard():
         return Agent(
             config=self.agents_config['med_agent'],
             llm=self.groq_llm,
-            tools=[BrowserTool(), WebSearchTool()],
+         
             verbose=True
         )
 
@@ -50,7 +47,7 @@ class Healthguard():
         return Agent(
             config=self.agents_config['labs_agent'],
             llm=self.groq_llm,
-            tools=[BrowserTool(), WebSearchTool()],
+            
             verbose=True
         )
 
@@ -59,7 +56,6 @@ class Healthguard():
         return Agent(
             config=self.agents_config['guardian_agent'],
             llm=self.groq_llm,
-            tools=[JSONStorageTool(), JSONResponseTool(), JSONProcessorTool(), BrowserTool()],
             verbose=True
         )
 
@@ -68,7 +64,7 @@ class Healthguard():
         return Agent(
             config=self.agents_config['voice_agent'],
             llm=self.groq_llm,
-            tools=[WebSearchTool()],
+     
             verbose=True
         )
 
