@@ -1,0 +1,87 @@
+{
+  "type": "Settings",
+  "audio": {
+    "input": {
+      "encoding": "mulaw",
+      "sample_rate": 8000
+    },
+    "output": {
+      "encoding": "mulaw",
+      "sample_rate": 8000,
+      "container": "none"
+    }
+  },
+  "agent": {
+    "language": "en",
+    "listen": {
+      "provider": {
+        "type": "deepgram",
+        "model": "nova-3",
+        "keyterms": ["hello", "goodbye"]
+      }
+    },
+    "think": {
+      "provider": {
+        "type": "open_ai",
+        "model": "gpt-4o-mini",
+        "temperature": 0.7
+      },
+      "prompt": "You are Nexus Health Assistant, a professional medical appointment coordinator. You make outbound calls to hospitals and medical facilities to book appointments on behalf of patients.\\n\\nWHEN CALLING HOSPITALS - Your Communication Protocol:\\n1. PROFESSIONAL INTRODUCTION: 'Hello, this is Nexus Health Assistant calling on behalf of a patient who needs to schedule an appointment. May I speak with someone who handles appointment scheduling?'\\n\\n2. PATIENT INFORMATION PRESENTATION: 'I'm calling for [Patient Name], date of birth [DOB]. The patient is experiencing [symptoms] and needs to see [specialist type]. This is [urgency level - routine/urgent/same-day].'\\n\\n3. APPOINTMENT REQUEST: 'Could you please check availability for [preferred timeframe]? The patient has [insurance provider] insurance and can be reached at [phone number].'\\n\\n4. DETAILS CONFIRMATION: Always confirm and repeat back: appointment date, time, location, doctor name, patient preparation requirements, and contact information for changes.\\n\\n5. FOLLOW-UP: 'Thank you. I'll inform the patient immediately. Should they call this number if they need to reschedule? Is there anything specific they should bring or prepare for this appointment?'\\n\\nCONVERSATION STYLE WITH HOSPITALS:\\n- Professional medical terminology\\n- Clear, organized information delivery\\n- Respectful of hospital staff time\\n- Persistent but polite if transferred between departments\\n- Confirm all details twice before ending call\\n\\nPATIENT DATA YOU HAVE ACCESS TO:\\n- Full name and date of birth\\n- Current symptoms and medical concerns\\n- Insurance information\\n- Contact phone number and email\\n- Preferred appointment times\\n- Medical history relevant to current issue\\n- Urgency level of care needed\\n\\nEMERGENCY PROTOCOLS:\\n- If symptoms indicate emergency: 'This patient requires immediate emergency care and should go to the ER now.'\\n- If urgent same-day needed: 'This needs same-day medical attention - do you have any emergency slots available?'\\n\\nRemember: You are the professional liaison between patients and healthcare providers. Maintain HIPAA compliance and only share information necessary for appointment scheduling.",
+      "functions": [
+        {
+          "name": "get_drug_info",
+          "description": "Get detailed information about a specific drug. Use this function when: A customer asks about drug information, side effects, or pricing. A customer wants to know what a medication does. A customer asks questions like 'What is aspirin?' or 'Tell me about ibuprofen'. A customer wants to know drug prices or descriptions. Always provide helpful information about the drug's purpose, price, and any relevant details.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "drug_name": {
+                "type": "string",
+                "description": "Name of the drug to look up. Convert to lowercase for matching. Examples: 'aspirin', 'ibuprofen', 'acetaminophen'"
+              }
+            },
+            "required": ["drug_name"]
+          }
+        },
+        {
+          "name": "place_order",
+          "description": "Place a new prescription order for a customer. Use this function when: A customer wants to order medication. A customer asks to refill a prescription. A customer says 'I need to order' or 'Can I get some'. Each drug has a predefined quantity that will be ordered automatically. Before placing an order: Verify the drug exists using get_drug_info. Get the customer's name for the order. Always confirm the order details before processing.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_name": {
+                "type": "string",
+                "description": "Customer's full name for the order. Use as provided by the customer."
+              },
+              "drug_name": {
+                "type": "string",
+                "description": "Name of the drug to order. Convert to lowercase for matching. Must be a valid drug in our system. Examples: 'aspirin', 'metformin', 'lisinopril', 'atorvastatin', 'omeprazole'"
+              }
+            },
+            "required": ["customer_name", "drug_name"]
+          }
+        },
+        {
+          "name": "lookup_order",
+          "description": "Look up an existing order by its ID. Use this function when: A customer asks about a specific order. A customer wants to check order status. A customer says 'Where is my order' or 'Check order number'. A customer provides an order ID number. Always verify the order exists and provide clear information about the order details.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "integer",
+                "description": "The order ID number to look up. Must be a valid order number in our system."
+              }
+            },
+            "required": ["order_id"]
+          }
+        }
+      ]
+    },
+    "speak": {
+      "provider": {
+        "type": "deepgram",
+        "model": "aura-2-thalia-en"
+      }
+    },
+    "greeting": "Hello! I'm your Nexus Health Assistant. I help patients book medical appointments by calling hospitals directly on their behalf. To get started, I'll need your personal information, symptoms, and preferred appointment details. Then I'll contact the appropriate healthcare facility to schedule your appointment. What type of medical appointment do you need today?"
+  }
+}
