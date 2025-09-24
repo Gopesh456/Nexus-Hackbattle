@@ -35,6 +35,36 @@ nurse_task:
 },
 "confirmation_message": "Your appointment with {doctor} has been successfully 
  booked for {date} at {time}.Your booking ID is {booking_id}."
+}
+
+  expected_output: >
+   JSON array of objects with the following structure:
+{
+   "user_data": {
+    "name": "string",
+    "age": "integer",
+    "symptoms": ["string"],
+  
+},
+"assessment": {
+  "urgency_level": "string", 
+  
+},
+"nearest_hospital": {
+  "name": "string",
+  "address": "string",
+  "distance_km": "float"
+},
+"appointment": {
+  "status": "string",
+  "doctor": "string",
+  "department": "string",
+  "date": "string (yyyy-mm-dd)",
+  "time": "string (hh:mm AM/PM)",
+  "booking_id": "string"
+},
+"confirmation_message": "Your appointment with {doctor} has been successfully 
+ booked for {date} at {time}.Your booking ID is {booking_id}."
 } 
 
 get_prompt:

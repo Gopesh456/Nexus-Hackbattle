@@ -18,14 +18,17 @@ def run():
     Run the crew.
     """
     inputs = {
-        'topic': 'AI LLMs',
+        
         'current_year': str(datetime.now().year)
     }
     
     try:
-        Healthguard().crew().kickoff(inputs=inputs)
+        Healthguard().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
+
     except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
+        raise Exception(f"An error occurred while testing the crew: {e}")
+        
+        
 
 
 def train():
