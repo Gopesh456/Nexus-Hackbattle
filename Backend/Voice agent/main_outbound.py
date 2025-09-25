@@ -74,31 +74,33 @@ class NexusHealthAgent:
 
     async def make_hospital_call(self, patient_info: PatientInfo, to_number: str):
         """Make outbound call to hospital for appointment booking
-        
+
         Args:
             patient_info: Patient information for the appointment
             to_number: Phone number to call (hospital/clinic)
-        
+
         Returns:
             str: Call SID if successful, None if failed
         """
         try:
             # Validate phone numbers
-            if not to_number or not to_number.startswith('+'):
+            if not to_number or not to_number.startswith("+"):
                 raise ValueError("Invalid 'to' phone number. Must start with '+'")
-            
-            if not self.twilio_phone_number or not self.twilio_phone_number.startswith('+'):
+
+            if not self.twilio_phone_number or not self.twilio_phone_number.startswith(
+                "+"
+            ):
                 raise ValueError("Invalid Twilio phone number configuration")
-            
+
             # Get the webhook URL from environment
-            ngrok_url = os.getenv('NGROK_URL')
+            ngrok_url = os.getenv("NGROK_URL")
             if not ngrok_url:
                 raise ValueError("NGROK_URL not configured in environment variables")
-            
+
             # Clean up NGROK_URL if it has extra protocols
-            webhook_url = ngrok_url.replace('https://', '').replace('http://', '')
+            webhook_url = ngrok_url.replace("https://", "").replace("http://", "")
             webhook_url = f"https://{webhook_url}/hospital-call"
-            
+
             # Create the outbound call
             call = self.twilio_client.calls.create(
                 url=webhook_url,
@@ -106,7 +108,7 @@ class NexusHealthAgent:
                 from_=self.twilio_phone_number,  # Your Twilio number (source)
                 method="POST",
                 timeout=30,  # Ring for 30 seconds max
-                record=False  # Set to True if you want to record calls
+                record=False,  # Set to True if you want to record calls
             )
 
             print(f"✅ Outbound call initiated successfully!")
@@ -114,7 +116,7 @@ class NexusHealthAgent:
             print(f"📞 TO: {to_number} (Hospital/Clinic)")
             print(f"🆔 Call SID: {call.sid}")
             print(f"🔗 Webhook URL: {webhook_url}")
-            
+
             return call.sid
 
         except Exception as e:
@@ -265,13 +267,15 @@ def book_appointment():
     """API endpoint to trigger hospital calls"""
     try:
         data = request.json
-        
+
         # Validate required fields
         if not data.get("hospital_number"):
-            return json.dumps({
-                "status": "error", 
-                "message": "hospital_number is required"
-            }), 400
+            return (
+                json.dumps(
+                    {"status": "error", "message": "hospital_number is required"}
+                ),
+                400,
+            )
 
         patient_info = PatientInfo(
             name=data.get("name", ""),
@@ -286,38 +290,48 @@ def book_appointment():
         )
 
         to_number = data.get("hospital_number")
-        
+
         # Validate phone number format
-        if not to_number.startswith('+'):
-            return json.dumps({
-                "status": "error",
-                "message": "hospital_number must include country code (e.g., +1234567890)"
-            }), 400
+        if not to_number.startswith("+"):
+            return (
+                json.dumps(
+                    {
+                        "status": "error",
+                        "message": "hospital_number must include country code (e.g., +1234567890)",
+                    }
+                ),
+                400,
+            )
 
         # Make the hospital call
-        call_sid = asyncio.run(
-            nexus_agent.make_hospital_call(patient_info, to_number)
-        )
+        call_sid = asyncio.run(nexus_agent.make_hospital_call(patient_info, to_number))
 
         if call_sid:
-            return json.dumps({
-                "status": "success", 
-                "call_sid": call_sid,
-                "from_number": nexus_agent.twilio_phone_number,
-                "to_number": to_number,
-                "message": f"Call initiated from {nexus_agent.twilio_phone_number} to {to_number}"
-            })
+            return json.dumps(
+                {
+                    "status": "success",
+                    "call_sid": call_sid,
+                    "from_number": nexus_agent.twilio_phone_number,
+                    "to_number": to_number,
+                    "message": f"Call initiated from {nexus_agent.twilio_phone_number} to {to_number}",
+                }
+            )
         else:
-            return json.dumps({
-                "status": "error",
-                "message": "Failed to initiate call. Check logs for details."
-            }), 500
-            
+            return (
+                json.dumps(
+                    {
+                        "status": "error",
+                        "message": "Failed to initiate call. Check logs for details.",
+                    }
+                ),
+                500,
+            )
+
     except Exception as e:
-        return json.dumps({
-            "status": "error",
-            "message": f"Server error: {str(e)}"
-        }), 500
+        return (
+            json.dumps({"status": "error", "message": f"Server error: {str(e)}"}),
+            500,
+        )
 
 
 async def start_websocket_server():
