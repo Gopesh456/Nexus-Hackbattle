@@ -70,6 +70,31 @@ class BloodTestReport(models.Model):
 		return f"Blood Test Report - {self.user.username}"
 
 
+class MetabolicPanel(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='metabolic_panel')
+	
+	# Basic Metabolic Panel parameters
+	glucose = models.CharField(max_length=50, blank=True, help_text="Glucose level (e.g., '95 mg/dL')")
+	calcium = models.CharField(max_length=50, blank=True, help_text="Calcium level (e.g., '9.4 mg/dL')")
+	sodium = models.CharField(max_length=50, blank=True, help_text="Sodium level (e.g., '140 mmol/L')")
+	potassium = models.CharField(max_length=50, blank=True, help_text="Potassium level (e.g., '4.2 mmol/L')")
+	chloride = models.CharField(max_length=50, blank=True, help_text="Chloride level (e.g., '102 mmol/L')")
+	carbon_dioxide = models.CharField(max_length=50, blank=True, help_text="Carbon Dioxide (CO2) level (e.g., '25 mmol/L')")
+	bun = models.CharField(max_length=50, blank=True, help_text="Blood Urea Nitrogen (BUN) level (e.g., '14 mg/dL')")
+	creatinine = models.CharField(max_length=50, blank=True, help_text="Creatinine level (e.g., '0.9 mg/dL')")
+	
+	# Test metadata
+	test_date = models.DateField(blank=True, null=True, help_text="Date when the metabolic panel was conducted")
+	lab_name = models.CharField(max_length=255, blank=True, help_text="Name of the laboratory")
+	doctor_name = models.CharField(max_length=255, blank=True, help_text="Name of the ordering physician")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Metabolic Panel - {self.user.username}"
+
+
 class UserNutritionGoals(models.Model):
 	"""Store user's daily nutrition goals"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='nutrition_goals')
