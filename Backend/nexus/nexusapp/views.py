@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
-from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer, MedicationDetailsSerializer
+from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails, Appointment, LabReport
+from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer, MedicationDetailsSerializer, AppointmentSerializer, LabReportSerializer, LabReportUploadSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import date, datetime
 import requests
 import json
+import base64
 
 
 @api_view(['POST'])
@@ -1290,6 +1291,328 @@ def daily_nutrition_summary(request):
     except Exception as e:
         return Response({
             'error': 'Failed to generate daily nutrition summary',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def store_appointment(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Create appointment data without token
+    appointment_data = request.data.copy()
+    appointment_data.pop('token', None)
+    
+    serializer = AppointmentSerializer(data=appointment_data)
+    
+    if serializer.is_valid():
+        appointment = serializer.save(user=user)
+        response_serializer = AppointmentSerializer(appointment)
+        return Response({
+            'message': 'Appointment stored successfully',
+            'data': response_serializer.data
+        }, status=status.HTTP_201_CREATED)
+    else:
+        return Response({
+            'error': 'Invalid data provided',
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_appointments(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Get all appointments for the user
+        appointments = Appointment.objects.filter(user=user)
+        serializer = AppointmentSerializer(appointments, many=True)
+        
+        return Response({
+            'user': user.username,
+            'count': appointments.count(),
+            'appointments': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Failed to retrieve appointments',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def store_lab_report(request):
+    """Store lab report with base64 file data"""
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Create lab report data without token
+        report_data = request.data.copy()
+        report_data.pop('token', None)
+        
+        # Validate input data using upload serializer
+        upload_serializer = LabReportUploadSerializer(data=report_data)
+        
+        if not upload_serializer.is_valid():
+            return Response({
+                'error': 'Invalid data provided',
+                'details': upload_serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = upload_serializer.validated_data
+        
+        # Calculate file size from base64 data
+        try:
+            decoded_data = base64.b64decode(validated_data['file_data'])
+            file_size = len(decoded_data)
+        except Exception:
+            return Response({
+                'error': 'Invalid base64 file data'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Store the lab report with base64 data
+        lab_report_data = {
+            'report_name': validated_data['report_name'],
+            'report_type': validated_data['report_type'],
+            'lab_name': validated_data.get('lab_name', ''),
+            'doctor_name': validated_data.get('doctor_name', ''),
+            'report_date': validated_data['report_date'],
+            'report_file_base64': validated_data['file_data'],  # Store the base64 string
+            'file_name': validated_data['file_name'],
+            'file_type': validated_data['file_type'],
+            'file_size': file_size,
+            'notes': validated_data.get('notes', '')
+        }
+        
+        # Create the lab report
+        serializer = LabReportSerializer(data=lab_report_data)
+        
+        if serializer.is_valid():
+            lab_report = serializer.save(user=user)
+            
+            # Store base64 data in a variable for processing (if needed)
+            base64_file_data = validated_data['file_data']
+            
+            # Return response without the base64 data (for security/size reasons)
+            response_data = LabReportSerializer(lab_report).data
+            response_data.pop('report_file_base64', None)  # Remove base64 from response
+            
+            return Response({
+                'message': 'Lab report stored successfully',
+                'data': response_data,
+                'file_stored': True,
+                'base64_length': len(base64_file_data)  # Just show the length for confirmation
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Failed to create lab report',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        return Response({
+            'error': 'Failed to store lab report',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_lab_reports(request):
+    """Get all lab reports for the authenticated user"""
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Get include_file_data parameter to optionally include base64 data
+        include_file_data = request.data.get('include_file_data', False)
+        
+        # Get all lab reports for the user
+        lab_reports = LabReport.objects.filter(user=user)
+        serializer = LabReportSerializer(lab_reports, many=True)
+        
+        response_data = serializer.data
+        
+        # Remove base64 data from response unless specifically requested
+        if not include_file_data:
+            for report in response_data:
+                report.pop('report_file_base64', None)
+        
+        return Response({
+            'user': user.username,
+            'count': lab_reports.count(),
+            'reports': response_data,
+            'note': 'File data excluded for performance. Set include_file_data=true to include base64 data.'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Failed to retrieve lab reports',
+            'details': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_lab_report_file(request):
+    """Get base64 file data for a specific lab report"""
+    # Get token from request body
+    token = request.data.get('token')
+    report_id = request.data.get('report_id')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    if not report_id:
+        return Response({
+            'error': 'Report ID is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Get the specific lab report
+        lab_report = LabReport.objects.get(id=report_id, user=user)
+        
+        # Store base64 data in a variable for processing
+        base64_file_data = lab_report.report_file_base64
+        
+        return Response({
+            'report_id': lab_report.id,
+            'report_name': lab_report.report_name,
+            'file_name': lab_report.file_name,
+            'file_type': lab_report.file_type,
+            'file_size': lab_report.file_size,
+            'file_size_mb': lab_report.get_file_size_mb(),
+            'file_data': base64_file_data,  # The base64 file data
+            'is_image': lab_report.is_image(),
+            'is_pdf': lab_report.is_pdf()
+        }, status=status.HTTP_200_OK)
+        
+    except LabReport.DoesNotExist:
+        return Response({
+            'error': 'Lab report not found or you do not have permission to access it'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'error': 'Failed to retrieve lab report file',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

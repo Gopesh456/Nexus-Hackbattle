@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
-from .models import FoodNutrition, UserNutritionGoals
+from .models import FoodNutrition, UserNutritionGoals, Appointment, LabReport
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -157,3 +157,73 @@ class DailyNutritionSummarySerializer(serializers.Serializer):
     goals = serializers.DictField()
     progress = serializers.DictField()
     entries_count = serializers.IntegerField()
+
+
+class AppointmentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = [
+            'id', 'username', 'appointment_date', 'location', 'doctor_name',
+            'doctor_specialization', 'appointment_type', 'reason', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'username', 'created_at', 'updated_at']
+
+
+class LabReportSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    file_size_mb = serializers.SerializerMethodField(read_only=True)
+    is_image = serializers.SerializerMethodField(read_only=True)
+    is_pdf = serializers.SerializerMethodField(read_only=True)
+    
+    class Meta:
+        model = LabReport
+        fields = [
+            'id', 'username', 'report_name', 'report_type', 'lab_name', 'doctor_name',
+            'report_date', 'report_file_base64', 'file_name', 'file_type', 'file_size',
+            'file_size_mb', 'is_image', 'is_pdf', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'username', 'file_size_mb', 'is_image', 'is_pdf', 'created_at', 'updated_at']
+    
+    def get_file_size_mb(self, obj):
+        return obj.get_file_size_mb()
+    
+    def get_is_image(self, obj):
+        return obj.is_image()
+    
+    def get_is_pdf(self, obj):
+        return obj.is_pdf()
+
+
+class LabReportUploadSerializer(serializers.Serializer):
+    """Serializer for lab report file upload with base64 data"""
+    report_name = serializers.CharField(max_length=255)
+    report_type = serializers.ChoiceField(choices=LabReport.LAB_REPORT_TYPE_CHOICES)
+    lab_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    doctor_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    report_date = serializers.DateField()
+    file_data = serializers.CharField(help_text="Base64 encoded file data")
+    file_name = serializers.CharField(max_length=255, help_text="Original filename")
+    file_type = serializers.CharField(max_length=10, help_text="File extension (e.g., pdf, jpg, png)")
+    notes = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate_file_data(self, value):
+        """Validate base64 data"""
+        import base64
+        try:
+            # Try to decode the base64 data to validate it
+            decoded_data = base64.b64decode(value)
+            # Check file size (limit to 10MB)
+            if len(decoded_data) > 10 * 1024 * 1024:
+                raise serializers.ValidationError("File size cannot exceed 10MB")
+            return value
+        except Exception:
+            raise serializers.ValidationError("Invalid base64 data")
+    
+    def validate_file_type(self, value):
+        """Validate file type"""
+        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'doc', 'docx']
+        if value.lower() not in allowed_types:
+            raise serializers.ValidationError(f"File type '{value}' is not allowed. Allowed types: {', '.join(allowed_types)}")
+        return value.lower()

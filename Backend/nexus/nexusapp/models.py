@@ -254,3 +254,81 @@ class FoodNutrition(models.Model):
 		}
 		
 		return totals
+
+
+class Appointment(models.Model):
+	APPOINTMENT_TYPE_CHOICES = [
+		('general', 'General'),
+		('consultant', 'Consultant')
+	]
+	
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
+	appointment_date = models.DateTimeField(help_text="Date and time of the appointment")
+	location = models.CharField(max_length=255, help_text="Location/address of the appointment")
+	doctor_name = models.CharField(max_length=255, help_text="Name of the doctor")
+	doctor_specialization = models.CharField(max_length=255, help_text="Doctor's specialization (e.g., Cardiology, Dermatology)")
+	appointment_type = models.CharField(
+		max_length=20, 
+		choices=APPOINTMENT_TYPE_CHOICES,
+		help_text="Type of appointment - General or Consultant"
+	)
+	reason = models.TextField(help_text="Reason for appointment (e.g., routine checkup, follow-up)")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	
+	class Meta:
+		ordering = ['-appointment_date']  # Most recent appointments first
+	
+	def __str__(self):
+		return f"{self.user.username} - {self.doctor_name} ({self.appointment_date.strftime('%Y-%m-%d %H:%M')})"
+
+
+class LabReport(models.Model):
+	LAB_REPORT_TYPE_CHOICES = [
+		('blood_test', 'Blood Test'),
+		('urine_test', 'Urine Test'),
+		('x_ray', 'X-Ray'),
+		('mri', 'MRI Scan'),
+		('ct_scan', 'CT Scan'),
+		('ultrasound', 'Ultrasound'),
+		('ecg', 'ECG/EKG'),
+		('pathology', 'Pathology Report'),
+		('other', 'Other')
+	]
+	
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lab_reports')
+	report_name = models.CharField(max_length=255, help_text="Name/title of the lab report")
+	report_type = models.CharField(
+		max_length=50, 
+		choices=LAB_REPORT_TYPE_CHOICES,
+		help_text="Type of lab report"
+	)
+	lab_name = models.CharField(max_length=255, blank=True, help_text="Name of the laboratory")
+	doctor_name = models.CharField(max_length=255, blank=True, help_text="Name of the requesting doctor")
+	report_date = models.DateField(help_text="Date when the lab report was conducted")
+	report_file_base64 = models.TextField(help_text="Lab report file stored as base64 string")
+	file_name = models.CharField(max_length=255, help_text="Original filename of the uploaded report")
+	file_type = models.CharField(max_length=10, help_text="File extension (e.g., pdf, jpg, png)")
+	file_size = models.IntegerField(help_text="File size in bytes")
+	notes = models.TextField(blank=True, help_text="Additional notes about the report")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	
+	class Meta:
+		ordering = ['-report_date', '-created_at']  # Most recent reports first
+	
+	def __str__(self):
+		return f"{self.user.username} - {self.report_name} ({self.report_date})"
+	
+	def get_file_size_mb(self):
+		"""Return file size in MB"""
+		return round(self.file_size / (1024 * 1024), 2)
+	
+	def is_image(self):
+		"""Check if the file is an image"""
+		image_types = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']
+		return self.file_type.lower() in image_types
+	
+	def is_pdf(self):
+		"""Check if the file is a PDF"""
+		return self.file_type.lower() == 'pdf'

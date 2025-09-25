@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import register_user, login_user,store_user_basic_data, get_user_basic_data,store_user_health_profile, get_user_health_profile, store_blood_test_report, get_blood_test_report, store_metabolic_panel, get_metabolic_panel, store_liver_function_test, get_liver_function_test, store_medication_details, get_medication_details, get_food_nutrition, edit_nutrition_item, delete_nutrition_item, get_nutrition_history, nutrition_goals, daily_nutrition_summary
+from .views import register_user, login_user,store_user_basic_data, get_user_basic_data,store_user_health_profile, get_user_health_profile, store_blood_test_report, get_blood_test_report, store_metabolic_panel, get_metabolic_panel, store_liver_function_test, get_liver_function_test, store_medication_details, get_medication_details, get_food_nutrition, edit_nutrition_item, delete_nutrition_item, get_nutrition_history, nutrition_goals, daily_nutrition_summary, store_appointment, get_appointments, store_lab_report, get_lab_reports, get_lab_report_file
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -26,4 +26,9 @@ urlpatterns = [
     path('nutrition/history/', get_nutrition_history, name='get_nutrition_history'),
     path('nutrition/goals/', nutrition_goals, name='nutrition_goals'),
     path('nutrition/summary/', daily_nutrition_summary, name='daily_nutrition_summary'),
+    path('appointments/store/', store_appointment, name='store_appointment'),
+    path('appointments/get/', get_appointments, name='get_appointments'),
+    path('lab-reports/store/', store_lab_report, name='store_lab_report'),
+    path('lab-reports/get/', get_lab_reports, name='get_lab_reports'),
+    path('lab-reports/file/', get_lab_report_file, name='get_lab_report_file'),
 ]
