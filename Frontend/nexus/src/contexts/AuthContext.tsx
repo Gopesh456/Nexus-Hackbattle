@@ -6,12 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import Cookies from "js-cookie";
-import {
-  AuthContextType,
-  User,
-  RegisterResponse,
-  LoginResponse,
-} from "../types";
+import { AuthContextType, User } from "../types";
 import { apiClient } from "../utils/api";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -46,21 +41,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response: LoginResponse = await apiClient.post("login/", {
-        username: username,
-        password: password,
-      });
+      const response = await apiClient.login(username, password);
 
       // Check for successful login response
       if (response.message === "Login successful" && response.tokens) {
-        // Store JWT token in secure cookie
-        Cookies.set("token", response.tokens, {
-          expires: 7,
-          secure: window.location.protocol === "https:", // Only secure in production
-          sameSite: "strict",
-        });
-
-        // Set user state
+        // Set user state - token is already stored in cookie by apiClient.login
         setUser({
           id: response.user.id.toString(),
           user: response.user.username,
@@ -71,35 +56,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (
-    username: string,
-    password: string
-  ): Promise<RegisterResponse> => {
+  const register = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response: RegisterResponse = await apiClient.post("register/", {
-        username: username,
-        password: password,
-      });
+      const response = await apiClient.register(username, password);
 
       // Check for successful registration
       if (
         response.message === "User registered successfully" &&
         response.tokens
       ) {
-        // Handle both token formats: string or object with access property
-        const token =
-          typeof response.tokens === "string"
-            ? response.tokens
-            : response.tokens.access;
-
-        if (token && token !== "") {
-          Cookies.set("token", token, { expires: 7 });
-          setUser({
-            id: response.user_id?.toString() || "1",
-            user: username,
-          });
-        }
+        // Set user state - token is already stored in cookie by apiClient.register
+        setUser({
+          id: response.user.id.toString(),
+          user: response.user.username,
+        });
       }
 
       return response;
@@ -108,8 +79,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    Cookies.remove("token");
+  const logout = async () => {
+    await apiClient.logout();
     setUser(null);
   };
 

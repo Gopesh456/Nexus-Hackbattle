@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BasicInfoFlow } from "../components/onboarding/BasicInfoFlow";
-import { HealthProfileFlow } from "../components/onboarding/HealthProfileFlow";
+import { HealthProfileFlow as EnhancedHealthProfileFlow } from "../components/onboarding/EnhancedHealthProfileFlow";
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +16,9 @@ export const Onboarding: React.FC = () => {
   };
 
   if (showHealthProfile) {
-    return <HealthProfileFlow onComplete={handleHealthProfileComplete} />;
+    return (
+      <EnhancedHealthProfileFlow onComplete={handleHealthProfileComplete} />
+    );
   }
 
   return <BasicInfoFlow onComplete={handleBasicInfoComplete} />;
