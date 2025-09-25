@@ -18,38 +18,85 @@ class HospitalCaller:
 
         self.client = Client(account_sid, auth_token)
 
-    def call_hospital(self, hospital_number, patient_data):
-        """Make an actual call to a hospital"""
-        print(f"🏥 Calling hospital at {hospital_number}...")
-        print(f"📋 Patient: {patient_data['name']}")
-        print(f"🔄 Symptoms: {patient_data['symptoms']}")
+    def call_hospital(self, to_number, patient_data=None):
+        """Make an actual outbound call using Twilio
+        
+        Args:
+            to_number (str): Phone number to call (must include country code, e.g., +1234567890)
+            patient_data (dict, optional): Patient information for context
+        
+        Returns:
+            dict: Call result with success status and details
+        """
+        print(f"🏥 Initiating outbound call to {to_number}...")
+        
+        if patient_data:
+            print(f"📋 Patient: {patient_data.get('name', 'N/A')}")
+            print(f"🔄 Symptoms: {patient_data.get('symptoms', 'N/A')}")
 
-        # Create TwiML that will connect to your WebSocket server
-        webhook_url = (
-            os.getenv("NGROK_URL", "https://your-ngrok-url.ngrok.io") + "/voice"
-        )
+        # Validate phone numbers
+        if not to_number or not to_number.startswith('+'):
+            return {
+                "success": False, 
+                "error": "Invalid 'to' phone number. Must include country code (e.g., +1234567890)"
+            }
+            
+        if not self.twilio_number or not self.twilio_number.startswith('+'):
+            return {
+                "success": False, 
+                "error": "Invalid Twilio phone number configuration in .env file"
+            }
+
+        # Get webhook URL from environment
+        ngrok_url = os.getenv("NGROK_URL")
+        if not ngrok_url:
+            return {
+                "success": False, 
+                "error": "NGROK_URL not configured in .env file"
+            }
+            
+        # Clean up webhook URL
+        webhook_url = ngrok_url.replace('https://', '').replace('http://', '')
+        webhook_url = f"https://{webhook_url}/voice"
 
         try:
+            print(f"📞 FROM: {self.twilio_number} (Your Twilio Number)")
+            print(f"📞 TO: {to_number} (Destination)")
+            print(f"🔗 Webhook: {webhook_url}")
+            
+            # Make the outbound call
             call = self.client.calls.create(
-                from_=self.twilio_number,
-                to=hospital_number,
-                url=webhook_url,  # This points to your voice agent
+                from_=self.twilio_number,  # Your Twilio number (source)
+                to=to_number,             # Destination number
+                url=webhook_url,          # Your voice agent webhook
                 method="POST",
+                timeout=30,               # Ring timeout
+                record=False              # Set to True to record calls
             )
 
-            print(f"✅ Call initiated! Call SID: {call.sid}")
-            print(f"📞 Status: {call.status}")
+            print(f"✅ Call initiated successfully!")
+            print(f"🆔 Call SID: {call.sid}")
+            print(f"� Initial Status: {call.status}")
 
             return {
                 "success": True,
                 "call_sid": call.sid,
                 "status": call.status,
-                "message": f"Call to {hospital_number} initiated successfully",
+                "from_number": self.twilio_number,
+                "to_number": to_number,
+                "webhook_url": webhook_url,
+                "message": f"Outbound call from {self.twilio_number} to {to_number} initiated successfully"
             }
 
         except Exception as e:
-            print(f"❌ Call failed: {str(e)}")
-            return {"success": False, "error": str(e)}
+            error_msg = f"Twilio API Error: {str(e)}"
+            print(f"❌ Call failed: {error_msg}")
+            return {
+                "success": False, 
+                "error": error_msg,
+                "from_number": self.twilio_number,
+                "to_number": to_number
+            }
 
 
 def collect_patient_info():
