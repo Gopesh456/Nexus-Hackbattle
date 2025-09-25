@@ -32,7 +32,40 @@ class UserHealthProfile(models.Model):
 
 	def __str__(self):
 		return f"Health Profile - {self.user.username}"
-		return self.username
+
+
+class BloodTestReport(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='blood_test_report')
+	
+	# Complete Blood Count (CBC) parameters
+	hemoglobin = models.CharField(max_length=50, blank=True, help_text="Hemoglobin level (e.g., '13.5 g/dL')")
+	hematocrit = models.CharField(max_length=50, blank=True, help_text="Hematocrit percentage (e.g., '40%')")
+	wbc_count = models.CharField(max_length=50, blank=True, help_text="White Blood Cell count (e.g., '7.2 x10^3/µL')")
+	rbc_count = models.CharField(max_length=50, blank=True, help_text="Red Blood Cell count (e.g., '4.7 x10^6/µL')")
+	platelet_count = models.CharField(max_length=50, blank=True, help_text="Platelet count (e.g., '250 x10^3/µL')")
+	
+	# Red Blood Cell Indices
+	mcv = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Volume (e.g., '90 fL')")
+	mch = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Hemoglobin (e.g., '30 pg')")
+	mchc = models.CharField(max_length=50, blank=True, help_text="Mean Corpuscular Hemoglobin Concentration (e.g., '33 g/dL')")
+	
+	# Differential Count
+	neutrophils = models.CharField(max_length=50, blank=True, help_text="Neutrophils percentage (e.g., '60%')")
+	lymphocytes = models.CharField(max_length=50, blank=True, help_text="Lymphocytes percentage (e.g., '30%')")
+	monocytes = models.CharField(max_length=50, blank=True, help_text="Monocytes percentage (e.g., '6%')")
+	eosinophils = models.CharField(max_length=50, blank=True, help_text="Eosinophils percentage (e.g., '3%')")
+	basophils = models.CharField(max_length=50, blank=True, help_text="Basophils percentage (e.g., '1%')")
+	
+	# Test metadata
+	test_date = models.DateField(blank=True, null=True, help_text="Date when the blood test was conducted")
+	lab_name = models.CharField(max_length=255, blank=True, help_text="Name of the laboratory")
+	doctor_name = models.CharField(max_length=255, blank=True, help_text="Name of the ordering physician")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Blood Test Report - {self.user.username}"
 
 
 class UserNutritionGoals(models.Model):
