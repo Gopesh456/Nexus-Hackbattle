@@ -6,7 +6,12 @@ import React, {
   ReactNode,
 } from "react";
 import Cookies from "js-cookie";
-import { AuthContextType, User, RegisterResponse } from "../types";
+import {
+  AuthContextType,
+  User,
+  RegisterResponse,
+  LoginResponse,
+} from "../types";
 import { apiClient } from "../utils/api";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -41,16 +46,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await apiClient.post("login/", {
+      const response: LoginResponse = await apiClient.post("login/", {
         username: username,
         password: password,
       });
 
-      if (response.tokens?.access) {
-        Cookies.set("token", response.tokens.access, { expires: 7 });
+      // Check for successful login response
+      if (response.message === "Login successful" && response.tokens) {
+        // Store JWT token in secure cookie
+        Cookies.set("token", response.tokens, {
+          expires: 7,
+          secure: window.location.protocol === "https:", // Only secure in production
+          sameSite: "strict",
+        });
+
+        // Set user state
         setUser({
-          id: response.user?.id?.toString() || "1",
-          user: response.user?.username || username,
+          id: response.user.id.toString(),
+          user: response.user.username,
         });
       }
     } finally {

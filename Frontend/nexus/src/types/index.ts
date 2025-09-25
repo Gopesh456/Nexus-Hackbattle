@@ -10,6 +10,15 @@ export interface RegisterResponse {
   tokens?: string | { access: string; refresh: string };
 }
 
+export interface LoginResponse {
+  message: string;
+  user: {
+    id: number;
+    username: string;
+  };
+  tokens: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   login: (user: string, password: string) => Promise<void>;
@@ -21,6 +30,7 @@ export interface AuthContextType {
 export interface HealthProfile {
   height_cm: number;
   weight_kg: number;
+  activity_level: "sedentary" | "light" | "moderate" | "active" | "very-active";
   chronic_conditions: string[];
   allergies: string[];
   current_medications: string[];

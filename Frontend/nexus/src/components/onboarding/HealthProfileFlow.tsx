@@ -1,136 +1,187 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Heart, Scale, Ruler, Droplets, Target, Phone, CheckCircle } from 'lucide-react';
-import { HealthProfile } from '../../types';
-import { apiClient } from '../../utils/api';
-import Cookies from 'js-cookie';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Scale,
+  Ruler,
+  Droplets,
+  Target,
+  Phone,
+  CheckCircle,
+  Activity,
+} from "lucide-react";
+import { HealthProfile } from "../../types";
+import { apiClient } from "../../utils/api";
+import Cookies from "js-cookie";
 
 interface HealthProfileFlowProps {
   onComplete: () => void;
 }
 
-const bloodGroupOptions = [
-  'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+const bloodGroupOptions = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const activityLevelOptions = [
+  {
+    value: "sedentary",
+    label: "Sedentary",
+    description: "Little or no exercise",
+  },
+  {
+    value: "light",
+    label: "Light",
+    description: "Light exercise 1-3 days/week",
+  },
+  {
+    value: "moderate",
+    label: "Moderate",
+    description: "Moderate exercise 3-5 days/week",
+  },
+  {
+    value: "active",
+    label: "Active",
+    description: "Heavy exercise 6-7 days/week",
+  },
+  {
+    value: "very-active",
+    label: "Very Active",
+    description: "Very heavy exercise, physical job",
+  },
 ];
 
-export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete }) => {
+export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({
+  onComplete,
+}) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [healthProfile, setHealthProfile] = useState<HealthProfile>({
     height_cm: 0,
     weight_kg: 0,
+    activity_level: "moderate",
     chronic_conditions: [],
     allergies: [],
     current_medications: [],
-    blood_group: '',
+    blood_group: "",
     daily_calorie_goal: 0,
     daily_protein_goal: 0,
     emergency_contact: {
-      name: '',
-      relationship: '',
-      phone: '',
+      name: "",
+      relationship: "",
+      phone: "",
     },
   });
 
   const steps = [
     {
-      id: 'height_cm',
+      id: "height_cm",
       title: "What's your height?",
-      subtitle: 'Help us calculate your health metrics',
+      subtitle: "Help us calculate your health metrics",
       icon: <Ruler className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'number',
-      placeholder: 'Enter height in cm',
-      suffix: 'cm'
+      type: "number",
+      placeholder: "Enter height in cm",
+      suffix: "cm",
     },
     {
-      id: 'weight_kg',
+      id: "weight_kg",
       title: "What's your current weight?",
-      subtitle: 'This helps us track your progress',
+      subtitle: "This helps us track your progress",
       icon: <Scale className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'number',
-      placeholder: 'Enter weight in kg',
-      suffix: 'kg'
+      type: "number",
+      placeholder: "Enter weight in kg",
+      suffix: "kg",
     },
     {
-      id: 'blood_group',
+      id: "activity_level",
+      title: "What's your activity level?",
+      subtitle: "This helps us calculate your caloric needs",
+      icon: <Activity className="w-8 h-8 text-[#76B3A8]" />,
+      type: "activity-select",
+      options: activityLevelOptions,
+    },
+    {
+      id: "blood_group",
       title: "What's your blood group?",
-      subtitle: 'Important for medical emergencies',
+      subtitle: "Important for medical emergencies",
       icon: <Droplets className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'select',
-      options: bloodGroupOptions
+      type: "select",
+      options: bloodGroupOptions,
     },
     {
-      id: 'chronic_conditions',
-      title: 'Do you have any chronic conditions?',
-      subtitle: 'List any ongoing health conditions (comma separated)',
+      id: "chronic_conditions",
+      title: "Do you have any chronic conditions?",
+      subtitle: "List any ongoing health conditions (comma separated)",
       icon: <Heart className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'multi-text',
-      placeholder: 'e.g., diabetes, hypertension, asthma'
+      type: "multi-text",
+      placeholder: "e.g., diabetes, hypertension, asthma",
     },
     {
-      id: 'allergies',
-      title: 'Do you have any allergies?',
-      subtitle: 'List any known allergies (comma separated)',
+      id: "allergies",
+      title: "Do you have any allergies?",
+      subtitle: "List any known allergies (comma separated)",
       icon: <Heart className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'multi-text',
-      placeholder: 'e.g., peanuts, shellfish, pollen'
+      type: "multi-text",
+      placeholder: "e.g., peanuts, shellfish, pollen",
     },
     {
-      id: 'current_medications',
-      title: 'Are you taking any medications?',
-      subtitle: 'List current medications (comma separated)',
+      id: "current_medications",
+      title: "Are you taking any medications?",
+      subtitle: "List current medications (comma separated)",
       icon: <Heart className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'multi-text',
-      placeholder: 'e.g., metformin, lisinopril, vitamin D'
+      type: "multi-text",
+      placeholder: "e.g., metformin, lisinopril, vitamin D",
     },
     {
-      id: 'daily_calorie_goal',
+      id: "daily_calorie_goal",
       title: "What's your daily calorie goal?",
-      subtitle: 'Target calories per day',
+      subtitle: "Target calories per day",
       icon: <Target className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'number',
-      placeholder: 'Enter daily calorie goal',
-      suffix: 'calories'
+      type: "number",
+      placeholder: "Enter daily calorie goal",
+      suffix: "calories",
     },
     {
-      id: 'daily_protein_goal',
+      id: "daily_protein_goal",
       title: "What's your daily protein goal?",
-      subtitle: 'Target protein intake per day',
+      subtitle: "Target protein intake per day",
       icon: <Target className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'number',
-      placeholder: 'Enter daily protein goal',
-      suffix: 'grams'
+      type: "number",
+      placeholder: "Enter daily protein goal",
+      suffix: "grams",
     },
     {
-      id: 'emergency_contact_name',
+      id: "emergency_contact_name",
       title: "Emergency contact name",
-      subtitle: 'Who should we contact in case of emergency?',
+      subtitle: "Who should we contact in case of emergency?",
       icon: <Phone className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'text',
-      placeholder: 'Full name'
+      type: "text",
+      placeholder: "Full name",
     },
     {
-      id: 'emergency_contact_relationship',
+      id: "emergency_contact_relationship",
       title: "Relationship to emergency contact",
-      subtitle: 'How are they related to you?',
+      subtitle: "How are they related to you?",
       icon: <Phone className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'text',
-      placeholder: 'e.g., Spouse, Parent, Sibling, Friend'
+      type: "text",
+      placeholder: "e.g., Spouse, Parent, Sibling, Friend",
     },
     {
-      id: 'emergency_contact_phone',
+      id: "emergency_contact_phone",
       title: "Emergency contact phone number",
-      subtitle: 'Their phone number',
+      subtitle: "Their phone number",
       icon: <Phone className="w-8 h-8 text-[#76B3A8]" />,
-      type: 'tel',
-      placeholder: 'Phone number'
+      type: "tel",
+      placeholder: "Phone number",
     },
   ];
 
-  const handleInputChange = (stepId: string, value: string | number | string[]) => {
-    if (stepId.startsWith('emergency_contact_')) {
-      const contactField = stepId.replace('emergency_contact_', '');
+  const handleInputChange = (
+    stepId: string,
+    value: string | number | string[]
+  ) => {
+    if (stepId.startsWith("emergency_contact_")) {
+      const contactField = stepId.replace("emergency_contact_", "");
       setHealthProfile({
         ...healthProfile,
         emergency_contact: {
@@ -138,10 +189,18 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
           [contactField]: value,
         },
       });
-    } else if (stepId === 'chronic_conditions' || stepId === 'allergies' || stepId === 'current_medications') {
-      const arrayValue = typeof value === 'string' 
-        ? value.split(',').map(item => item.trim()).filter(item => item.length > 0)
-        : value as string[];
+    } else if (
+      stepId === "chronic_conditions" ||
+      stepId === "allergies" ||
+      stepId === "current_medications"
+    ) {
+      const arrayValue =
+        typeof value === "string"
+          ? value
+              .split(",")
+              .map((item) => item.trim())
+              .filter((item) => item.length > 0)
+          : (value as string[]);
       setHealthProfile({
         ...healthProfile,
         [stepId]: arrayValue,
@@ -155,30 +214,44 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
   };
 
   const getCurrentValue = (stepId: string): string | number => {
-    if (stepId.startsWith('emergency_contact_')) {
-      const contactField = stepId.replace('emergency_contact_', '');
-      return healthProfile.emergency_contact[contactField as keyof typeof healthProfile.emergency_contact] || '';
-    } else if (stepId === 'chronic_conditions' || stepId === 'allergies' || stepId === 'current_medications') {
-      return healthProfile[stepId].join(', ');
+    if (stepId.startsWith("emergency_contact_")) {
+      const contactField = stepId.replace("emergency_contact_", "");
+      return (
+        healthProfile.emergency_contact[
+          contactField as keyof typeof healthProfile.emergency_contact
+        ] || ""
+      );
+    } else if (
+      stepId === "chronic_conditions" ||
+      stepId === "allergies" ||
+      stepId === "current_medications"
+    ) {
+      return healthProfile[stepId].join(", ");
     }
-    return healthProfile[stepId as keyof HealthProfile] as string | number || '';
+    return (
+      (healthProfile[stepId as keyof HealthProfile] as string | number) || ""
+    );
   };
 
   const isStepValid = (): boolean => {
     const currentStepData = steps[currentStep];
     const currentValue = getCurrentValue(currentStepData.id);
-    
+
     // Optional fields (can be empty)
-    if (['chronic_conditions', 'allergies', 'current_medications'].includes(currentStepData.id)) {
+    if (
+      ["chronic_conditions", "allergies", "current_medications"].includes(
+        currentStepData.id
+      )
+    ) {
       return true;
     }
-    
+
     // Required fields
-    if (currentStepData.type === 'number') {
+    if (currentStepData.type === "number") {
       return Number(currentValue) > 0;
     }
-    
-    return currentValue !== '' && currentValue !== 0;
+
+    return currentValue !== "" && currentValue !== 0;
   };
 
   const handleNext = () => {
@@ -198,9 +271,12 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const token = Cookies.get('token');
+      const token = Cookies.get("token");
+      // Create a copy without activity_level for backend submission
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { activity_level, ...backendData } = healthProfile;
       await apiClient.storeHealthProfile({
-        ...healthProfile,
+        ...backendData,
         token,
       });
       setShowCompletion(true);
@@ -208,7 +284,7 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
         onComplete();
       }, 2000);
     } catch (error) {
-      console.error('Failed to store health profile:', error);
+      console.error("Failed to store health profile:", error);
       // Handle error - maybe show error message
     } finally {
       setIsSubmitting(false);
@@ -231,8 +307,12 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
           >
             <CheckCircle className="w-10 h-10 text-green-600" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Health Profile Complete!</h1>
-          <p className="text-xl text-gray-600">Taking you to your dashboard...</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Health Profile Complete!
+          </h1>
+          <p className="text-xl text-gray-600">
+            Taking you to your dashboard...
+          </p>
         </motion.div>
       </div>
     );
@@ -259,7 +339,9 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
             >
               {currentStepData.icon}
             </motion.div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{currentStepData.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {currentStepData.title}
+            </h1>
             <p className="text-[#7D7F7C]">{currentStepData.subtitle}</p>
           </div>
 
@@ -267,13 +349,17 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-[#7D7F7C]">Health Profile</span>
-              <span className="text-sm text-[#7D7F7C]">{currentStep + 1} of {steps.length}</span>
+              <span className="text-sm text-[#7D7F7C]">
+                {currentStep + 1} of {steps.length}
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <motion.div
                 className="bg-[#76B3A8] h-2 rounded-full"
                 initial={{ width: 0 }}
-                animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                animate={{
+                  width: `${((currentStep + 1) / steps.length) * 100}%`,
+                }}
                 transition={{ duration: 0.3 }}
               />
             </div>
@@ -288,28 +374,77 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
               exit={{ opacity: 0, x: -20 }}
               className="mb-8"
             >
-              {currentStepData.type === 'select' ? (
+              {currentStepData.type === "select" ? (
                 <div className="grid grid-cols-2 gap-3">
                   {currentStepData.options?.map((option) => (
                     <button
-                      key={option}
-                      onClick={() => handleInputChange(currentStepData.id, option)}
+                      key={typeof option === "string" ? option : option.value}
+                      onClick={() =>
+                        handleInputChange(
+                          currentStepData.id,
+                          typeof option === "string" ? option : option.value
+                        )
+                      }
                       className={`p-4 rounded-lg border text-center transition-all duration-200 ${
-                        getCurrentValue(currentStepData.id) === option
-                          ? 'bg-[#76B3A8] text-white border-[#76B3A8]'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-[#76B3A8]'
+                        getCurrentValue(currentStepData.id) ===
+                        (typeof option === "string" ? option : option.value)
+                          ? "bg-[#76B3A8] text-white border-[#76B3A8]"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[#76B3A8]"
                       }`}
                     >
-                      {option}
+                      {typeof option === "string" ? option : option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : currentStepData.type === "activity-select" ? (
+                <div className="space-y-3">
+                  {currentStepData.options?.map((option) => (
+                    <button
+                      key={typeof option === "string" ? option : option.value}
+                      onClick={() =>
+                        handleInputChange(
+                          currentStepData.id,
+                          typeof option === "string" ? option : option.value
+                        )
+                      }
+                      className={`w-full p-4 rounded-lg border text-left transition-all duration-200 ${
+                        getCurrentValue(currentStepData.id) ===
+                        (typeof option === "string" ? option : option.value)
+                          ? "bg-[#76B3A8] text-white border-[#76B3A8]"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-[#76B3A8]"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-semibold">
+                            {typeof option === "string" ? option : option.label}
+                          </div>
+                          {typeof option !== "string" && option.description && (
+                            <div className="text-sm opacity-75 mt-1">
+                              {option.description}
+                            </div>
+                          )}
+                        </div>
+                        {getCurrentValue(currentStepData.id) ===
+                          (typeof option === "string"
+                            ? option
+                            : option.value) && (
+                          <div className="w-6 h-6 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          </div>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>
               ) : (
                 <div className="relative">
-                  {currentStepData.type === 'multi-text' ? (
+                  {currentStepData.type === "multi-text" ? (
                     <textarea
                       value={getCurrentValue(currentStepData.id)}
-                      onChange={(e) => handleInputChange(currentStepData.id, e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(currentStepData.id, e.target.value)
+                      }
                       placeholder={currentStepData.placeholder}
                       className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent transition-all duration-200 resize-none"
                       rows={3}
@@ -318,9 +453,14 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
                     <input
                       type={currentStepData.type}
                       value={getCurrentValue(currentStepData.id)}
-                      onChange={(e) => handleInputChange(currentStepData.id, 
-                        currentStepData.type === 'number' ? Number(e.target.value) : e.target.value
-                      )}
+                      onChange={(e) =>
+                        handleInputChange(
+                          currentStepData.id,
+                          currentStepData.type === "number"
+                            ? Number(e.target.value)
+                            : e.target.value
+                        )
+                      }
                       placeholder={currentStepData.placeholder}
                       className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent transition-all duration-200"
                     />
@@ -353,7 +493,11 @@ export const HealthProfileFlow: React.FC<HealthProfileFlowProps> = ({ onComplete
               disabled={isSubmitting || !isStepValid()}
               className="flex items-center px-6 py-3 bg-[#76B3A8] text-white rounded-lg font-semibold hover:bg-[#6BA399] transition-colors duration-200 disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : currentStep === steps.length - 1 ? 'Complete' : 'Next'}
+              {isSubmitting
+                ? "Saving..."
+                : currentStep === steps.length - 1
+                ? "Complete"
+                : "Next"}
               {!isSubmitting && <ChevronRight className="w-4 h-4 ml-1" />}
             </motion.button>
           </div>
