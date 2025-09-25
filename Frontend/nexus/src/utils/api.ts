@@ -83,23 +83,23 @@ class ApiClient {
   // Authentication endpoints
   async register(username: string, password: string) {
     const response = await this.post("register/", { username, password });
-    
+
     // Store JWT token in cookie if registration is successful
     if (response.tokens) {
       Cookies.set("token", response.tokens, { expires: 7 }); // Store for 7 days
     }
-    
+
     return response;
   }
 
   async login(username: string, password: string) {
     const response = await this.post("login/", { username, password });
-    
+
     // Store JWT token in cookie if login is successful
     if (response.tokens) {
       Cookies.set("token", response.tokens, { expires: 7 }); // Store for 7 days
     }
-    
+
     return response;
   }
 

@@ -31,7 +31,9 @@ interface SmartWatchMetricsProps {
   className?: string;
 }
 
-export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className = "" }) => {
+export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({
+  className = "",
+}) => {
   const [metrics, setMetrics] = useState<HealthMetrics>({
     heartRate: 0,
     stepsToday: 0,
@@ -41,7 +43,7 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
     stressLevel: 0,
     bodyTemperature: 0,
   });
-  
+
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,60 +62,119 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
 
     try {
       const response = await fetch(HTTP_URL, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        }
+          Accept: "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log("HTTP polling successful, received data:", data);
-        
+
         // Update metrics with received data
-        setMetrics(prevMetrics => ({
+        setMetrics((prevMetrics) => ({
           heartRate: data.heartRate || data.heart_rate || prevMetrics.heartRate,
-          stepsToday: data.stepsToday || data.steps_today || data.steps || prevMetrics.stepsToday,
-          caloriesBurned: data.caloriesBurned || data.calories_burned || data.calories || prevMetrics.caloriesBurned,
+          stepsToday:
+            data.stepsToday ||
+            data.steps_today ||
+            data.steps ||
+            prevMetrics.stepsToday,
+          caloriesBurned:
+            data.caloriesBurned ||
+            data.calories_burned ||
+            data.calories ||
+            prevMetrics.caloriesBurned,
           bloodPressure: {
-            systolic: data.bloodPressure?.systolic || data.blood_pressure?.systolic || data.systolic || prevMetrics.bloodPressure.systolic,
-            diastolic: data.bloodPressure?.diastolic || data.blood_pressure?.diastolic || data.diastolic || prevMetrics.bloodPressure.diastolic,
+            systolic:
+              data.bloodPressure?.systolic ||
+              data.blood_pressure?.systolic ||
+              data.systolic ||
+              prevMetrics.bloodPressure.systolic,
+            diastolic:
+              data.bloodPressure?.diastolic ||
+              data.blood_pressure?.diastolic ||
+              data.diastolic ||
+              prevMetrics.bloodPressure.diastolic,
           },
-          bloodOxygenLevel: data.bloodOxygenLevel || data.blood_oxygen_level || data.oxygen || prevMetrics.bloodOxygenLevel,
-          stressLevel: data.stressLevel || data.stress_level || data.stress || prevMetrics.stressLevel,
-          bodyTemperature: data.bodyTemperature || data.body_temperature || data.temperature || prevMetrics.bodyTemperature,
+          bloodOxygenLevel:
+            data.bloodOxygenLevel ||
+            data.blood_oxygen_level ||
+            data.oxygen ||
+            prevMetrics.bloodOxygenLevel,
+          stressLevel:
+            data.stressLevel ||
+            data.stress_level ||
+            data.stress ||
+            prevMetrics.stressLevel,
+          bodyTemperature:
+            data.bodyTemperature ||
+            data.body_temperature ||
+            data.temperature ||
+            prevMetrics.bodyTemperature,
           timestamp: data.timestamp || new Date().toISOString(),
         }));
 
         setLastUpdate(new Date());
         setIsConnected(true);
         setIsConnecting(false);
-        
+
         // Set up polling interval for continuous updates
         pollingIntervalRef.current = setInterval(async () => {
           try {
             const pollResponse = await fetch(HTTP_URL, {
-              method: 'GET',
+              method: "GET",
               headers: {
-                'Accept': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
-              }
+                Accept: "application/json",
+                "ngrok-skip-browser-warning": "true",
+              },
             });
-            
+
             if (pollResponse.ok) {
               const pollData = await pollResponse.json();
-              setMetrics(prevMetrics => ({
-                heartRate: pollData.heartRate || pollData.heart_rate || prevMetrics.heartRate,
-                stepsToday: pollData.stepsToday || pollData.steps_today || pollData.steps || prevMetrics.stepsToday,
-                caloriesBurned: pollData.caloriesBurned || pollData.calories_burned || pollData.calories || prevMetrics.caloriesBurned,
+              setMetrics((prevMetrics) => ({
+                heartRate:
+                  pollData.heartRate ||
+                  pollData.heart_rate ||
+                  prevMetrics.heartRate,
+                stepsToday:
+                  pollData.stepsToday ||
+                  pollData.steps_today ||
+                  pollData.steps ||
+                  prevMetrics.stepsToday,
+                caloriesBurned:
+                  pollData.caloriesBurned ||
+                  pollData.calories_burned ||
+                  pollData.calories ||
+                  prevMetrics.caloriesBurned,
                 bloodPressure: {
-                  systolic: pollData.bloodPressure?.systolic || pollData.blood_pressure?.systolic || pollData.systolic || prevMetrics.bloodPressure.systolic,
-                  diastolic: pollData.bloodPressure?.diastolic || pollData.blood_pressure?.diastolic || pollData.diastolic || prevMetrics.bloodPressure.diastolic,
+                  systolic:
+                    pollData.bloodPressure?.systolic ||
+                    pollData.blood_pressure?.systolic ||
+                    pollData.systolic ||
+                    prevMetrics.bloodPressure.systolic,
+                  diastolic:
+                    pollData.bloodPressure?.diastolic ||
+                    pollData.blood_pressure?.diastolic ||
+                    pollData.diastolic ||
+                    prevMetrics.bloodPressure.diastolic,
                 },
-                bloodOxygenLevel: pollData.bloodOxygenLevel || pollData.blood_oxygen_level || pollData.oxygen || prevMetrics.bloodOxygenLevel,
-                stressLevel: pollData.stressLevel || pollData.stress_level || pollData.stress || prevMetrics.stressLevel,
-                bodyTemperature: pollData.bodyTemperature || pollData.body_temperature || pollData.temperature || prevMetrics.bodyTemperature,
+                bloodOxygenLevel:
+                  pollData.bloodOxygenLevel ||
+                  pollData.blood_oxygen_level ||
+                  pollData.oxygen ||
+                  prevMetrics.bloodOxygenLevel,
+                stressLevel:
+                  pollData.stressLevel ||
+                  pollData.stress_level ||
+                  pollData.stress ||
+                  prevMetrics.stressLevel,
+                bodyTemperature:
+                  pollData.bodyTemperature ||
+                  pollData.body_temperature ||
+                  pollData.temperature ||
+                  prevMetrics.bodyTemperature,
                 timestamp: pollData.timestamp || new Date().toISOString(),
               }));
               setLastUpdate(new Date());
@@ -122,16 +183,19 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
             console.error("HTTP polling error:", pollError);
           }
         }, 2000); // Poll every 2 seconds
-
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error("HTTP polling failed:", error);
-      setError(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(
+        `Connection failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       setIsConnecting(false);
       setIsConnected(false);
-      
+
       // Retry HTTP polling after 5 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
         tryHttpPolling();
@@ -163,19 +227,48 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
         try {
           const data = JSON.parse(event.data);
           console.log("Received health data:", data);
-          
+
           // Update metrics with received data
-          setMetrics(prevMetrics => ({
-            heartRate: data.heartRate || data.heart_rate || prevMetrics.heartRate,
-            stepsToday: data.stepsToday || data.steps_today || data.steps || prevMetrics.stepsToday,
-            caloriesBurned: data.caloriesBurned || data.calories_burned || data.calories || prevMetrics.caloriesBurned,
+          setMetrics((prevMetrics) => ({
+            heartRate:
+              data.heartRate || data.heart_rate || prevMetrics.heartRate,
+            stepsToday:
+              data.stepsToday ||
+              data.steps_today ||
+              data.steps ||
+              prevMetrics.stepsToday,
+            caloriesBurned:
+              data.caloriesBurned ||
+              data.calories_burned ||
+              data.calories ||
+              prevMetrics.caloriesBurned,
             bloodPressure: {
-              systolic: data.bloodPressure?.systolic || data.blood_pressure?.systolic || data.systolic || prevMetrics.bloodPressure.systolic,
-              diastolic: data.bloodPressure?.diastolic || data.blood_pressure?.diastolic || data.diastolic || prevMetrics.bloodPressure.diastolic,
+              systolic:
+                data.bloodPressure?.systolic ||
+                data.blood_pressure?.systolic ||
+                data.systolic ||
+                prevMetrics.bloodPressure.systolic,
+              diastolic:
+                data.bloodPressure?.diastolic ||
+                data.blood_pressure?.diastolic ||
+                data.diastolic ||
+                prevMetrics.bloodPressure.diastolic,
             },
-            bloodOxygenLevel: data.bloodOxygenLevel || data.blood_oxygen_level || data.oxygen || prevMetrics.bloodOxygenLevel,
-            stressLevel: data.stressLevel || data.stress_level || data.stress || prevMetrics.stressLevel,
-            bodyTemperature: data.bodyTemperature || data.body_temperature || data.temperature || prevMetrics.bodyTemperature,
+            bloodOxygenLevel:
+              data.bloodOxygenLevel ||
+              data.blood_oxygen_level ||
+              data.oxygen ||
+              prevMetrics.bloodOxygenLevel,
+            stressLevel:
+              data.stressLevel ||
+              data.stress_level ||
+              data.stress ||
+              prevMetrics.stressLevel,
+            bodyTemperature:
+              data.bodyTemperature ||
+              data.body_temperature ||
+              data.temperature ||
+              prevMetrics.bodyTemperature,
             timestamp: data.timestamp || new Date().toISOString(),
           }));
 
@@ -186,11 +279,17 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
       };
 
       wsRef.current.onclose = (event) => {
-        console.log("SmartWatch WebSocket disconnected. Code:", event.code, "Reason:", event.reason);
+        console.log(
+          "SmartWatch WebSocket disconnected. Code:",
+          event.code,
+          "Reason:",
+          event.reason
+        );
         setIsConnected(false);
         setIsConnecting(false);
-        
-        if (event.code !== 1000) { // Not a normal closure
+
+        if (event.code !== 1000) {
+          // Not a normal closure
           console.log("Abnormal closure, will try HTTP polling as fallback");
           setError("WebSocket failed. Trying HTTP polling...");
           // Try HTTP polling as fallback
@@ -202,17 +301,18 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
 
       wsRef.current.onerror = (error) => {
         console.error("SmartWatch WebSocket error:", error);
-        console.log("WebSocket connection failed, trying HTTP polling as fallback");
+        console.log(
+          "WebSocket connection failed, trying HTTP polling as fallback"
+        );
         setError("WebSocket failed. Trying HTTP polling...");
         setIsConnecting(false);
         setIsConnected(false);
-        
+
         // Try HTTP polling as fallback after WebSocket fails
         setTimeout(() => {
           tryHttpPolling();
         }, 1000);
       };
-
     } catch (err) {
       console.error("WebSocket connection error:", err);
       setError("Failed to establish connection");
@@ -225,17 +325,17 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    
+
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    
+
     if (wsRef.current) {
       wsRef.current.close(1000, "Manual disconnect");
       wsRef.current = null;
     }
-    
+
     setIsConnected(false);
     setIsConnecting(false);
     setError(null);
@@ -261,36 +361,39 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
     return <WifiOff className="w-4 h-4" />;
   };
 
-  const getHealthStatus = (metric: keyof HealthMetrics, value: number | { systolic: number; diastolic: number }) => {
+  const getHealthStatus = (
+    metric: keyof HealthMetrics,
+    value: number | { systolic: number; diastolic: number }
+  ) => {
     switch (metric) {
-      case 'heartRate': {
+      case "heartRate": {
         const hr = value as number;
-        if (hr < 60) return 'text-blue-600 bg-blue-50';
-        if (hr > 100) return 'text-red-600 bg-red-50';
-        return 'text-green-600 bg-green-50';
+        if (hr < 60) return "text-blue-600 bg-blue-50";
+        if (hr > 100) return "text-red-600 bg-red-50";
+        return "text-green-600 bg-green-50";
       }
-      
-      case 'bloodOxygenLevel': {
+
+      case "bloodOxygenLevel": {
         const oxygen = value as number;
-        if (oxygen < 95) return 'text-red-600 bg-red-50';
-        return 'text-green-600 bg-green-50';
+        if (oxygen < 95) return "text-red-600 bg-red-50";
+        return "text-green-600 bg-green-50";
       }
-      
-      case 'stressLevel': {
+
+      case "stressLevel": {
         const stress = value as number;
-        if (stress > 7) return 'text-red-600 bg-red-50';
-        if (stress > 4) return 'text-yellow-600 bg-yellow-50';
-        return 'text-green-600 bg-green-50';
+        if (stress > 7) return "text-red-600 bg-red-50";
+        if (stress > 4) return "text-yellow-600 bg-yellow-50";
+        return "text-green-600 bg-green-50";
       }
-      
-      case 'bodyTemperature': {
+
+      case "bodyTemperature": {
         const temp = value as number;
-        if (temp > 99.5 || temp < 97) return 'text-red-600 bg-red-50';
-        return 'text-green-600 bg-green-50';
+        if (temp > 99.5 || temp < 97) return "text-red-600 bg-red-50";
+        return "text-green-600 bg-green-50";
       }
-      
+
       default:
-        return 'text-gray-600 bg-gray-50';
+        return "text-gray-600 bg-gray-50";
     }
   };
 
@@ -306,25 +409,35 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
           <div className="flex items-center space-x-3">
             <Watch className="w-6 h-6 text-[#76B3A8]" />
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">SmartWatch Health Metrics</h2>
-              <p className="text-sm text-gray-600">Real-time health monitoring</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                SmartWatch Health Metrics
+              </h2>
+              <p className="text-sm text-gray-600">
+                Real-time health monitoring
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {lastUpdate && (
               <span className="text-xs text-gray-500">
                 Last update: {lastUpdate.toLocaleTimeString()}
               </span>
             )}
-            
-            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getStatusColor()}`}>
+
+            <div
+              className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getStatusColor()}`}
+            >
               {getStatusIcon()}
               <span className="text-sm font-medium">
-                {isConnecting ? "Connecting..." : isConnected ? "Connected" : "Disconnected"}
+                {isConnecting
+                  ? "Connecting..."
+                  : isConnected
+                  ? "Connected"
+                  : "Disconnected"}
               </span>
             </div>
-            
+
             <div className="flex space-x-2">
               <button
                 onClick={isConnected ? disconnect : connectWebSocket}
@@ -333,7 +446,7 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               >
                 {isConnected ? "Disconnect" : "WebSocket"}
               </button>
-              
+
               <button
                 onClick={isConnected ? disconnect : tryHttpPolling}
                 disabled={isConnecting}
@@ -344,7 +457,7 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
             </div>
           </div>
         </div>
-        
+
         {error && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -384,13 +497,22 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               />
             )}
           </div>
-          
-          <div className={`p-3 rounded-lg ${getHealthStatus('heartRate', metrics.heartRate)}`}>
+
+          <div
+            className={`p-3 rounded-lg ${getHealthStatus(
+              "heartRate",
+              metrics.heartRate
+            )}`}
+          >
             <div className="text-2xl font-bold">
               {isConnected ? metrics.heartRate || "--" : "--"}
             </div>
             <div className="text-xs mt-1">
-              {metrics.heartRate < 60 ? "Low" : metrics.heartRate > 100 ? "High" : "Normal"}
+              {metrics.heartRate < 60
+                ? "Low"
+                : metrics.heartRate > 100
+                ? "High"
+                : "Normal"}
             </div>
           </div>
         </motion.div>
@@ -411,14 +533,12 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">Total steps</p>
             </div>
           </div>
-          
+
           <div className="p-3 rounded-lg bg-blue-50">
             <div className="text-2xl font-bold text-blue-900">
               {isConnected ? (metrics.stepsToday || 0).toLocaleString() : "--"}
             </div>
-            <div className="text-xs mt-1 text-blue-700">
-              Goal: 10,000 steps
-            </div>
+            <div className="text-xs mt-1 text-blue-700">Goal: 10,000 steps</div>
           </div>
         </motion.div>
 
@@ -438,14 +558,12 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">kcal</p>
             </div>
           </div>
-          
+
           <div className="p-3 rounded-lg bg-orange-50">
             <div className="text-2xl font-bold text-orange-900">
               {isConnected ? metrics.caloriesBurned || 0 : "--"}
             </div>
-            <div className="text-xs mt-1 text-orange-700">
-              Active burn
-            </div>
+            <div className="text-xs mt-1 text-orange-700">Active burn</div>
           </div>
         </motion.div>
 
@@ -465,13 +583,14 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">mmHg</p>
             </div>
           </div>
-          
+
           <div className="p-3 rounded-lg bg-purple-50">
             <div className="text-2xl font-bold text-purple-900">
-              {isConnected && (metrics.bloodPressure.systolic || metrics.bloodPressure.diastolic) ? 
-                `${metrics.bloodPressure.systolic}/${metrics.bloodPressure.diastolic}` : 
-                "--/--"
-              }
+              {isConnected &&
+              (metrics.bloodPressure.systolic ||
+                metrics.bloodPressure.diastolic)
+                ? `${metrics.bloodPressure.systolic}/${metrics.bloodPressure.diastolic}`
+                : "--/--"}
             </div>
             <div className="text-xs mt-1 text-purple-700">
               Systolic/Diastolic
@@ -495,8 +614,13 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">SpO2</p>
             </div>
           </div>
-          
-          <div className={`p-3 rounded-lg ${getHealthStatus('bloodOxygenLevel', metrics.bloodOxygenLevel)}`}>
+
+          <div
+            className={`p-3 rounded-lg ${getHealthStatus(
+              "bloodOxygenLevel",
+              metrics.bloodOxygenLevel
+            )}`}
+          >
             <div className="text-2xl font-bold">
               {isConnected ? `${metrics.bloodOxygenLevel || 0}%` : "--%"}
             </div>
@@ -522,13 +646,22 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">0-10 scale</p>
             </div>
           </div>
-          
-          <div className={`p-3 rounded-lg ${getHealthStatus('stressLevel', metrics.stressLevel)}`}>
+
+          <div
+            className={`p-3 rounded-lg ${getHealthStatus(
+              "stressLevel",
+              metrics.stressLevel
+            )}`}
+          >
             <div className="text-2xl font-bold">
               {isConnected ? metrics.stressLevel || 0 : "--"}
             </div>
             <div className="text-xs mt-1">
-              {metrics.stressLevel > 7 ? "High" : metrics.stressLevel > 4 ? "Medium" : "Low"}
+              {metrics.stressLevel > 7
+                ? "High"
+                : metrics.stressLevel > 4
+                ? "Medium"
+                : "Low"}
             </div>
           </div>
         </motion.div>
@@ -549,13 +682,20 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">°F</p>
             </div>
           </div>
-          
-          <div className={`p-3 rounded-lg ${getHealthStatus('bodyTemperature', metrics.bodyTemperature)}`}>
+
+          <div
+            className={`p-3 rounded-lg ${getHealthStatus(
+              "bodyTemperature",
+              metrics.bodyTemperature
+            )}`}
+          >
             <div className="text-2xl font-bold">
               {isConnected ? `${metrics.bodyTemperature || 0}°` : "--°"}
             </div>
             <div className="text-xs mt-1">
-              {metrics.bodyTemperature > 99.5 || metrics.bodyTemperature < 97 ? "Abnormal" : "Normal"}
+              {metrics.bodyTemperature > 99.5 || metrics.bodyTemperature < 97
+                ? "Abnormal"
+                : "Normal"}
             </div>
           </div>
         </motion.div>
@@ -576,10 +716,16 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({ className 
               <p className="text-sm text-gray-600">SmartWatch Link</p>
             </div>
           </div>
-          
+
           <div className="space-y-2">
-            <div className={`p-2 rounded text-center text-sm font-medium ${getStatusColor()}`}>
-              {isConnecting ? "Connecting..." : isConnected ? "Live Data" : "No Connection"}
+            <div
+              className={`p-2 rounded text-center text-sm font-medium ${getStatusColor()}`}
+            >
+              {isConnecting
+                ? "Connecting..."
+                : isConnected
+                ? "Live Data"
+                : "No Connection"}
             </div>
             {lastUpdate && (
               <div className="text-xs text-gray-500 text-center">

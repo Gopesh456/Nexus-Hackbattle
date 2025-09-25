@@ -6,10 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import Cookies from "js-cookie";
-import {
-  AuthContextType,
-  User,
-} from "../types";
+import { AuthContextType, User } from "../types";
 import { apiClient } from "../utils/api";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -59,10 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (
-    username: string,
-    password: string
-  ) => {
+  const register = async (username: string, password: string) => {
     setIsLoading(true);
     try {
       const response = await apiClient.register(username, password);

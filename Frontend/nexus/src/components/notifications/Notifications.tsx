@@ -31,7 +31,8 @@ const mockNotifications: Notification[] = [
     id: "1",
     type: "health_alert",
     title: "Critical Blood Pressure Reading",
-    message: "Your blood pressure reading of 180/110 is critically high. Please contact your doctor immediately.",
+    message:
+      "Your blood pressure reading of 180/110 is critically high. Please contact your doctor immediately.",
     timestamp: "2025-09-25T10:30:00Z",
     isRead: false,
     priority: "critical",
@@ -51,7 +52,8 @@ const mockNotifications: Notification[] = [
     id: "3",
     type: "appointment",
     title: "Upcoming Appointment",
-    message: "Appointment with Dr. Sarah Smith tomorrow at 2:00 PM. Remember to bring your lab results.",
+    message:
+      "Appointment with Dr. Sarah Smith tomorrow at 2:00 PM. Remember to bring your lab results.",
     timestamp: "2025-09-24T16:00:00Z",
     isRead: true,
     priority: "medium",
@@ -61,7 +63,8 @@ const mockNotifications: Notification[] = [
     id: "4",
     type: "medication",
     title: "Low Medication Stock",
-    message: "Your Metformin supply is running low (5 days remaining). Consider reordering soon.",
+    message:
+      "Your Metformin supply is running low (5 days remaining). Consider reordering soon.",
     timestamp: "2025-09-24T12:00:00Z",
     isRead: false,
     priority: "medium",
@@ -71,7 +74,8 @@ const mockNotifications: Notification[] = [
     id: "5",
     type: "reminder",
     title: "Health Check Reminder",
-    message: "Don't forget to log your daily weight and water intake for today.",
+    message:
+      "Don't forget to log your daily weight and water intake for today.",
     timestamp: "2025-09-24T07:00:00Z",
     isRead: true,
     priority: "low",
@@ -81,7 +85,8 @@ const mockNotifications: Notification[] = [
     id: "6",
     type: "health_alert",
     title: "Unusual Heart Rate Pattern",
-    message: "Your heart rate has been elevated for the past 3 hours. Consider taking a break and relaxing.",
+    message:
+      "Your heart rate has been elevated for the past 3 hours. Consider taking a break and relaxing.",
     timestamp: "2025-09-23T20:15:00Z",
     isRead: false,
     priority: "high",
@@ -89,16 +94,22 @@ const mockNotifications: Notification[] = [
   },
 ];
 
-export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) => {
+export const Notifications: React.FC<NotificationsProps> = ({
+  className = "",
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(mockNotifications);
   const [filter, setFilter] = useState<"all" | "unread" | "critical">("all");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -152,10 +163,12 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
     return date.toLocaleDateString();
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  const criticalCount = notifications.filter(n => n.priority === "critical" && !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const criticalCount = notifications.filter(
+    (n) => n.priority === "critical" && !n.isRead
+  ).length;
 
-  const filteredNotifications = notifications.filter(notification => {
+  const filteredNotifications = notifications.filter((notification) => {
     switch (filter) {
       case "unread":
         return !notification.isRead;
@@ -167,21 +180,25 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
   });
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, isRead: true } : notification
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id
+          ? { ...notification, isRead: true }
+          : notification
       )
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, isRead: true }))
+    setNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, isRead: true }))
     );
   };
 
   const dismissNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
   };
 
   return (
@@ -195,7 +212,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
         title="Notifications"
       >
         <Bell className="w-6 h-6" />
-        
+
         {/* Badge */}
         {unreadCount > 0 && (
           <motion.span
@@ -223,7 +240,9 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
             {/* Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Notifications
+                </h3>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -231,14 +250,16 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              
+
               {/* Filters */}
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                   {["all", "unread", "critical"].map((filterOption) => (
                     <button
                       key={filterOption}
-                      onClick={() => setFilter(filterOption as "all" | "unread" | "critical")}
+                      onClick={() =>
+                        setFilter(filterOption as "all" | "unread" | "critical")
+                      }
                       className={`px-3 py-1 text-sm rounded-md transition-colors capitalize ${
                         filter === filterOption
                           ? "bg-white text-gray-900 shadow-sm"
@@ -249,7 +270,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
                     </button>
                   ))}
                 </div>
-                
+
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
@@ -283,16 +304,24 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
                       }`}
                     >
                       <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-lg border ${getPriorityColor(notification.priority)}`}>
+                        <div
+                          className={`p-2 rounded-lg border ${getPriorityColor(
+                            notification.priority
+                          )}`}
+                        >
                           {getNotificationIcon(notification.type)}
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h4 className={`text-sm font-medium ${
-                                !notification.isRead ? "text-gray-900" : "text-gray-700"
-                              }`}>
+                              <h4
+                                className={`text-sm font-medium ${
+                                  !notification.isRead
+                                    ? "text-gray-900"
+                                    : "text-gray-700"
+                                }`}
+                              >
                                 {notification.title}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -309,7 +338,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Actions */}
                             <div className="flex items-center space-x-1 ml-2">
                               {!notification.isRead && (
@@ -322,7 +351,9 @@ export const Notifications: React.FC<NotificationsProps> = ({ className = "" }) 
                                 </button>
                               )}
                               <button
-                                onClick={() => dismissNotification(notification.id)}
+                                onClick={() =>
+                                  dismissNotification(notification.id)
+                                }
                                 className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                                 title="Dismiss"
                               >

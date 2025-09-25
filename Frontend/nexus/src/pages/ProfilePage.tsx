@@ -102,7 +102,7 @@ export const ProfilePage: React.FC = () => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch basic info
         const basicInfoResponse = await apiClient.getBasicInfo();
         if (basicInfoResponse) {
@@ -117,8 +117,8 @@ export const ProfilePage: React.FC = () => {
 
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch profile data:', err);
-        setError('Failed to load profile data. Please try again.');
+        console.error("Failed to fetch profile data:", err);
+        setError("Failed to load profile data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -164,12 +164,17 @@ export const ProfilePage: React.FC = () => {
   ]);
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState<EditingAppointment | null>(null);
+  const [editingAppointment, setEditingAppointment] =
+    useState<EditingAppointment | null>(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const upcomingAppointments = appointments.filter(apt => apt.status === "upcoming");
-  const pastAppointments = appointments.filter(apt => apt.status === "completed" || apt.status === "cancelled");
+  const upcomingAppointments = appointments.filter(
+    (apt) => apt.status === "upcoming"
+  );
+  const pastAppointments = appointments.filter(
+    (apt) => apt.status === "completed" || apt.status === "cancelled"
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -199,8 +204,8 @@ export const ProfilePage: React.FC = () => {
       setIsEditingProfile(false);
       // Show success message (you could add a toast notification here)
     } catch (err) {
-      console.error('Failed to update profile:', err);
-      alert('Failed to update profile. Please try again.');
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile. Please try again.");
     }
   };
 
@@ -209,8 +214,8 @@ export const ProfilePage: React.FC = () => {
 
     if (editingAppointment.id) {
       // Update existing appointment
-      setAppointments(prev =>
-        prev.map(apt =>
+      setAppointments((prev) =>
+        prev.map((apt) =>
           apt.id === editingAppointment.id
             ? ({ ...apt, ...editingAppointment } as Appointment)
             : apt
@@ -223,7 +228,7 @@ export const ProfilePage: React.FC = () => {
         id: Date.now().toString(),
         status: "upcoming",
       } as Appointment;
-      setAppointments(prev => [...prev, newAppointment]);
+      setAppointments((prev) => [...prev, newAppointment]);
     }
 
     setEditingAppointment(null);
@@ -231,27 +236,27 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleAppointmentDelete = (id: string) => {
-    setAppointments(prev => prev.filter(apt => apt.id !== id));
+    setAppointments((prev) => prev.filter((apt) => apt.id !== id));
   };
 
   const handleDownloadHealthSummary = async () => {
     setIsDownloading(true);
-    
+
     // Simulate API call for PDF generation
     setTimeout(() => {
       // In a real app, this would call the API with JWT token
       // fetch('/api/health-summary/pdf', {
       //   headers: { 'Authorization': `Bearer ${token}` }
       // })
-      
+
       // Simulate file download
-      const link = document.createElement('a');
-      link.href = '#'; // This would be the actual PDF blob URL
-      link.download = 'health-summary.pdf';
+      const link = document.createElement("a");
+      link.href = "#"; // This would be the actual PDF blob URL
+      link.download = "health-summary.pdf";
       // link.click();
-      
+
       setIsDownloading(false);
-      alert('Health summary download started!'); // Replace with actual download
+      alert("Health summary download started!"); // Replace with actual download
     }, 2000);
   };
 
@@ -276,7 +281,9 @@ export const ProfilePage: React.FC = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Profile</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Error Loading Profile
+            </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
@@ -296,7 +303,9 @@ export const ProfilePage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-600">Manage your personal information and appointments</p>
+          <p className="text-gray-600">
+            Manage your personal information and appointments
+          </p>
         </div>
       </div>
 
@@ -308,7 +317,9 @@ export const ProfilePage: React.FC = () => {
       >
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Personal Information
+            </h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -341,7 +352,12 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="text"
                   value={profile.full_name}
-                  onChange={(e) => setProfile(prev => ({ ...prev, full_name: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({
+                      ...prev,
+                      full_name: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 />
               ) : (
@@ -358,7 +374,9 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, email: e.target.value }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 />
               ) : (
@@ -375,7 +393,9 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="tel"
                   value={profile.phone}
-                  onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, phone: e.target.value }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 />
               ) : (
@@ -392,7 +412,12 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="text"
                   value={profile.location}
-                  onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({
+                      ...prev,
+                      location: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 />
               ) : (
@@ -409,11 +434,18 @@ export const ProfilePage: React.FC = () => {
                 <input
                   type="date"
                   value={profile.date_of_birth}
-                  onChange={(e) => setProfile(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({
+                      ...prev,
+                      date_of_birth: e.target.value,
+                    }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 />
               ) : (
-                <p className="text-gray-900 py-3">{formatDate(profile.date_of_birth)}</p>
+                <p className="text-gray-900 py-3">
+                  {formatDate(profile.date_of_birth)}
+                </p>
               )}
             </div>
 
@@ -425,7 +457,9 @@ export const ProfilePage: React.FC = () => {
               {isEditingProfile ? (
                 <select
                   value={profile.gender}
-                  onChange={(e) => setProfile(prev => ({ ...prev, gender: e.target.value }))}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, gender: e.target.value }))
+                  }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
                 >
                   <option value="male">Male</option>
@@ -434,7 +468,9 @@ export const ProfilePage: React.FC = () => {
                   <option value="prefer-not-to-say">Prefer not to say</option>
                 </select>
               ) : (
-                <p className="text-gray-900 py-3 capitalize">{profile.gender}</p>
+                <p className="text-gray-900 py-3 capitalize">
+                  {profile.gender}
+                </p>
               )}
             </div>
           </div>
@@ -485,14 +521,16 @@ export const ProfilePage: React.FC = () => {
                 <Activity className="w-4 h-4 mr-2 text-blue-600" />
                 Physical Measurements
               </h3>
-              
+
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
                   <Ruler className="w-3 h-3 inline mr-1" />
                   Height
                 </label>
                 <p className="text-gray-900">
-                  {healthProfile.height_cm ? `${healthProfile.height_cm} cm` : 'Not specified'}
+                  {healthProfile.height_cm
+                    ? `${healthProfile.height_cm} cm`
+                    : "Not specified"}
                 </p>
               </div>
 
@@ -502,7 +540,9 @@ export const ProfilePage: React.FC = () => {
                   Weight
                 </label>
                 <p className="text-gray-900">
-                  {healthProfile.weight_kg ? `${healthProfile.weight_kg} kg` : 'Not specified'}
+                  {healthProfile.weight_kg
+                    ? `${healthProfile.weight_kg} kg`
+                    : "Not specified"}
                 </p>
               </div>
 
@@ -512,7 +552,7 @@ export const ProfilePage: React.FC = () => {
                   Blood Group
                 </label>
                 <p className="text-gray-900">
-                  {healthProfile.blood_group || 'Not specified'}
+                  {healthProfile.blood_group || "Not specified"}
                 </p>
               </div>
             </div>
@@ -523,22 +563,25 @@ export const ProfilePage: React.FC = () => {
                 <AlertTriangle className="w-4 h-4 mr-2 text-orange-600" />
                 Medical Information
               </h3>
-              
+
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
                   Chronic Conditions
                 </label>
                 <div className="text-gray-900">
-                  {healthProfile.chronic_conditions && healthProfile.chronic_conditions.length > 0 ? (
+                  {healthProfile.chronic_conditions &&
+                  healthProfile.chronic_conditions.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {healthProfile.chronic_conditions.map((condition, index) => (
-                        <span
-                          key={index}
-                          className="inline-block px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full"
-                        >
-                          {condition}
-                        </span>
-                      ))}
+                      {healthProfile.chronic_conditions.map(
+                        (condition, index) => (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full"
+                          >
+                            {condition}
+                          </span>
+                        )
+                      )}
                     </div>
                   ) : (
                     <span>None reported</span>
@@ -551,7 +594,8 @@ export const ProfilePage: React.FC = () => {
                   Allergies
                 </label>
                 <div className="text-gray-900">
-                  {healthProfile.allergies && healthProfile.allergies.length > 0 ? (
+                  {healthProfile.allergies &&
+                  healthProfile.allergies.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {healthProfile.allergies.map((allergy, index) => (
                         <span
@@ -574,13 +618,16 @@ export const ProfilePage: React.FC = () => {
                   Current Medications
                 </label>
                 <div className="text-gray-900">
-                  {healthProfile.current_medications && healthProfile.current_medications.length > 0 ? (
+                  {healthProfile.current_medications &&
+                  healthProfile.current_medications.length > 0 ? (
                     <div className="space-y-1">
-                      {healthProfile.current_medications.map((medication, index) => (
-                        <div key={index} className="text-sm">
-                          • {medication}
-                        </div>
-                      ))}
+                      {healthProfile.current_medications.map(
+                        (medication, index) => (
+                          <div key={index} className="text-sm">
+                            • {medication}
+                          </div>
+                        )
+                      )}
                     </div>
                   ) : (
                     <span>None reported</span>
@@ -595,13 +642,15 @@ export const ProfilePage: React.FC = () => {
                 <Target className="w-4 h-4 mr-2 text-green-600" />
                 Goals & Emergency
               </h3>
-              
+
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
                   Daily Calorie Goal
                 </label>
                 <p className="text-gray-900">
-                  {healthProfile.daily_calorie_goal ? `${healthProfile.daily_calorie_goal} kcal` : 'Not set'}
+                  {healthProfile.daily_calorie_goal
+                    ? `${healthProfile.daily_calorie_goal} kcal`
+                    : "Not set"}
                 </p>
               </div>
 
@@ -610,7 +659,9 @@ export const ProfilePage: React.FC = () => {
                   Daily Protein Goal
                 </label>
                 <p className="text-gray-900">
-                  {healthProfile.daily_protein_goal ? `${healthProfile.daily_protein_goal} g` : 'Not set'}
+                  {healthProfile.daily_protein_goal
+                    ? `${healthProfile.daily_protein_goal} g`
+                    : "Not set"}
                 </p>
               </div>
 
@@ -620,11 +671,18 @@ export const ProfilePage: React.FC = () => {
                   Emergency Contact
                 </label>
                 <div className="text-gray-900">
-                  {healthProfile.emergency_contact && healthProfile.emergency_contact.name ? (
+                  {healthProfile.emergency_contact &&
+                  healthProfile.emergency_contact.name ? (
                     <div className="space-y-1 text-sm">
-                      <div><strong>{healthProfile.emergency_contact.name}</strong></div>
-                      <div className="text-gray-600">{healthProfile.emergency_contact.relationship}</div>
-                      <div className="text-gray-600">{healthProfile.emergency_contact.phone}</div>
+                      <div>
+                        <strong>{healthProfile.emergency_contact.name}</strong>
+                      </div>
+                      <div className="text-gray-600">
+                        {healthProfile.emergency_contact.relationship}
+                      </div>
+                      <div className="text-gray-600">
+                        {healthProfile.emergency_contact.phone}
+                      </div>
                     </div>
                   ) : (
                     <span>Not specified</span>
@@ -645,7 +703,9 @@ export const ProfilePage: React.FC = () => {
       >
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Appointments
+            </h2>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -676,7 +736,7 @@ export const ProfilePage: React.FC = () => {
               <Clock className="w-5 h-5 mr-2 text-blue-600" />
               Upcoming Appointments ({upcomingAppointments.length})
             </h3>
-            
+
             {upcomingAppointments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -694,23 +754,35 @@ export const ProfilePage: React.FC = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="font-semibold text-gray-900">{appointment.doctorName}</h4>
-                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getStatusColor(appointment.status)}`}>
+                          <h4 className="font-semibold text-gray-900">
+                            {appointment.doctorName}
+                          </h4>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
                             {appointment.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-1">{appointment.specialty} • {appointment.type}</p>
+                        <p className="text-sm text-gray-600 mb-1">
+                          {appointment.specialty} • {appointment.type}
+                        </p>
                         <p className="text-sm text-gray-600 mb-1">
                           {formatDate(appointment.date)} at {appointment.time}
                         </p>
                         {appointment.location && (
-                          <p className="text-sm text-gray-500 mb-2">{appointment.location}</p>
+                          <p className="text-sm text-gray-500 mb-2">
+                            {appointment.location}
+                          </p>
                         )}
                         {appointment.notes && (
-                          <p className="text-sm text-gray-600 italic">{appointment.notes}</p>
+                          <p className="text-sm text-gray-600 italic">
+                            {appointment.notes}
+                          </p>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center space-x-1 ml-4">
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -727,7 +799,9 @@ export const ProfilePage: React.FC = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleAppointmentDelete(appointment.id)}
+                          onClick={() =>
+                            handleAppointmentDelete(appointment.id)
+                          }
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete appointment"
                         >
@@ -747,7 +821,7 @@ export const ProfilePage: React.FC = () => {
               <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
               Past Appointments ({pastAppointments.length})
             </h3>
-            
+
             {pastAppointments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -765,17 +839,27 @@ export const ProfilePage: React.FC = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="font-semibold text-gray-700">{appointment.doctorName}</h4>
-                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getStatusColor(appointment.status)}`}>
+                          <h4 className="font-semibold text-gray-700">
+                            {appointment.doctorName}
+                          </h4>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
                             {appointment.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-1">{appointment.specialty} • {appointment.type}</p>
+                        <p className="text-sm text-gray-600 mb-1">
+                          {appointment.specialty} • {appointment.type}
+                        </p>
                         <p className="text-sm text-gray-600 mb-1">
                           {formatDate(appointment.date)} at {appointment.time}
                         </p>
                         {appointment.notes && (
-                          <p className="text-sm text-gray-600 italic">{appointment.notes}</p>
+                          <p className="text-sm text-gray-600 italic">
+                            {appointment.notes}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -797,8 +881,12 @@ export const ProfilePage: React.FC = () => {
         <div className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Health Summary</h2>
-              <p className="text-gray-600 mt-1">Download a comprehensive PDF report of your health data</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Health Summary
+              </h2>
+              <p className="text-gray-600 mt-1">
+                Download a comprehensive PDF report of your health data
+              </p>
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -832,7 +920,9 @@ export const ProfilePage: React.FC = () => {
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-gray-900">
-                    {editingAppointment.id ? "Edit Appointment" : "Add New Appointment"}
+                    {editingAppointment.id
+                      ? "Edit Appointment"
+                      : "Add New Appointment"}
                   </h2>
                   <button
                     onClick={() => {
@@ -856,7 +946,7 @@ export const ProfilePage: React.FC = () => {
                       type="text"
                       value={editingAppointment.doctorName || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           doctorName: e.target.value,
                         }))
@@ -874,7 +964,7 @@ export const ProfilePage: React.FC = () => {
                       type="text"
                       value={editingAppointment.specialty || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           specialty: e.target.value,
                         }))
@@ -892,7 +982,7 @@ export const ProfilePage: React.FC = () => {
                       type="date"
                       value={editingAppointment.date || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           date: e.target.value,
                         }))
@@ -909,7 +999,7 @@ export const ProfilePage: React.FC = () => {
                       type="time"
                       value={editingAppointment.time || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           time: e.target.value,
                         }))
@@ -925,7 +1015,7 @@ export const ProfilePage: React.FC = () => {
                     <select
                       value={editingAppointment.type || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           type: e.target.value,
                         }))
@@ -949,7 +1039,7 @@ export const ProfilePage: React.FC = () => {
                       type="text"
                       value={editingAppointment.location || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           location: e.target.value,
                         }))
@@ -966,7 +1056,7 @@ export const ProfilePage: React.FC = () => {
                     <textarea
                       value={editingAppointment.notes || ""}
                       onChange={(e) =>
-                        setEditingAppointment(prev => ({
+                        setEditingAppointment((prev) => ({
                           ...prev,
                           notes: e.target.value,
                         }))

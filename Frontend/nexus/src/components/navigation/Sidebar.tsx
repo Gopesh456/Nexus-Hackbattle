@@ -1,6 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Home, Utensils, Bot, FlaskConical, LogOut, User, Settings } from "lucide-react";
+import {
+  Home,
+  Utensils,
+  Bot,
+  FlaskConical,
+  LogOut,
+  User,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Notifications } from "../notifications/Notifications";
 
@@ -67,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-sm text-gray-500">Health Platform</p>
             </div>
           </div>
-          
+
           {/* Notifications */}
           <Notifications />
         </div>
