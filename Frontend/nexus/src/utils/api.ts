@@ -81,10 +81,19 @@ class ApiClient {
   }
 
   // Food Nutrition POST endpoints
-  async addFoodEntry(foodName: string, quantity: number) {
+  async addFoodEntry(
+    foodName: string,
+    quantity: number,
+    unit: string,
+    time: string,
+    mealType: string
+  ) {
     return this.post("nutrition/", {
       food_name: foodName,
       quantity: quantity,
+      unit: unit,
+      time: time,
+      meal_type: mealType,
     });
   }
 
@@ -102,6 +111,33 @@ class ApiClient {
     return this.post("nutrition/delete/", {
       id: entryId,
     });
+  }
+
+  async editNutritionEntry(
+    entryId: number,
+    foodName: string,
+    quantity: number,
+    unit: string,
+    time: string,
+    mealType: string
+  ) {
+    return this.post("nutrition/edit/", {
+      id: entryId,
+      food_name: foodName,
+      quantity: quantity,
+      unit: unit,
+      time: time,
+      meal_type: mealType,
+    });
+  }
+
+  // Dashboard specific endpoints
+  async getDailySummary() {
+    return this.post("dashboard/daily-summary/", {});
+  }
+
+  async getRealtimeHealthData() {
+    return this.post("health/realtime/", {});
   }
 
   // User Goals POST endpoints

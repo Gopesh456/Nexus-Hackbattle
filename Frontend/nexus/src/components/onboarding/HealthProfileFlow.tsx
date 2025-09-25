@@ -11,6 +11,12 @@ import {
   Phone,
   CheckCircle,
   Activity,
+  Skip,
+  X,
+  Plus,
+  AlertTriangle,
+  Pill,
+  ShieldAlert,
 } from "lucide-react";
 import { HealthProfile } from "../../types";
 import { apiClient } from "../../utils/api";

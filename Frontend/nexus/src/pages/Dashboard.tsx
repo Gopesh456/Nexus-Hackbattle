@@ -1,130 +1,86 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Heart, 
-  Activity, 
-  Droplets, 
-  Moon, 
-  Target, 
-  TrendingUp,
-  Calendar,
-  Plus,
-  Settings,
-  LogOut
-} from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAuth } from '../contexts/AuthContext';
-import { HealthMetrics } from '../types';
-
-const mockHealthData = [
-  { date: '2025-01-01', weight: 180, steps: 8500, water: 64, sleep: 7.5 },
-  { date: '2025-01-02', weight: 179.5, steps: 9200, water: 72, sleep: 8.0 },
-  { date: '2025-01-03', weight: 179.2, steps: 7800, water: 56, sleep: 6.5 },
-  { date: '2025-01-04', weight: 178.8, steps: 10500, water: 80, sleep: 7.8 },
-  { date: '2025-01-05', weight: 178.5, steps: 9800, water: 68, sleep: 7.2 },
-  { date: '2025-01-06', weight: 178.2, steps: 11200, water: 76, sleep: 8.5 },
-  { date: '2025-01-07', weight: 177.9, steps: 9600, water: 64, sleep: 7.9 },
-];
-
-const mockMetrics: HealthMetrics = {
-  weight: 177.9,
-  steps: 9600,
-  waterIntake: 64,
-  sleep: 7.9,
-  heartRate: 72,
-  caloriesBurned: 2340,
-};
+import React, { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Heart, Settings, LogOut, Calendar, RefreshCw } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { RealtimeHealthMetrics } from "../components/dashboard/RealtimeHealthMetrics";
+import { DailyNutritionSummary } from "../components/dashboard/DailyNutritionSummary";
+import { FoodDiary } from "../components/dashboard/FoodDiary";
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [selectedMetric, setSelectedMetric] = useState('weight');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const metricCards = [
-    {
-      id: 'weight',
-      title: 'Weight',
-      value: `${mockMetrics.weight} lbs`,
-      change: '-0.3 lbs',
-      icon: Target,
-      color: '#76B3A8',
-      bgColor: 'bg-[#76B3A8]/10',
-    },
-    {
-      id: 'steps',
-      title: 'Steps',
-      value: mockMetrics.steps.toLocaleString(),
-      change: '+1,200',
-      icon: Activity,
-      color: '#3B82F6',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      id: 'water',
-      title: 'Water Intake',
-      value: `${mockMetrics.waterIntake} oz`,
-      change: '+8 oz',
-      icon: Droplets,
-      color: '#06B6D4',
-      bgColor: 'bg-cyan-50',
-    },
-    {
-      id: 'sleep',
-      title: 'Sleep',
-      value: `${mockMetrics.sleep}h`,
-      change: '+0.7h',
-      icon: Moon,
-      color: '#8B5CF6',
-      bgColor: 'bg-purple-50',
-    },
-    {
-      id: 'heartRate',
-      title: 'Heart Rate',
-      value: `${mockMetrics.heartRate} bpm`,
-      change: '-2 bpm',
-      icon: Heart,
-      color: '#EF4444',
-      bgColor: 'bg-red-50',
-    },
-    {
-      id: 'calories',
-      title: 'Calories Burned',
-      value: mockMetrics.caloriesBurned.toLocaleString(),
-      change: '+340',
-      icon: TrendingUp,
-      color: '#F59E0B',
-      bgColor: 'bg-amber-50',
-    },
-  ];
+  const handleRefresh = useCallback(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, []);
+
+  const handleUpdateSummary = useCallback(() => {
+    // This will trigger a re-render of components that depend on nutrition data
+    setRefreshKey((prev) => prev + 1);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Enhanced Header */}
+      <header className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#76B3A8] rounded-full flex items-center justify-center">
-                <Heart className="w-6 h-6 text-white" />
-              </div>
+            <div className="flex items-center space-x-4">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 10 }}
+                className="w-12 h-12 bg-gradient-to-br from-[#76B3A8] to-[#5A9A8E] rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <Heart className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">HealthApp</h1>
-                <p className="text-sm text-[#7D7F7C]">Welcome back, {user?.user}</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Nexus Health
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Welcome back, {user?.user}
+                </p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center space-x-2">
+              {/* Current Date Display */}
+              <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-xl mr-4">
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 text-[#7D7F7C] hover:text-gray-900 transition-colors duration-200"
+                onClick={handleRefresh}
+                className="p-3 text-gray-600 hover:text-[#76B3A8] hover:bg-[#76B3A8]/10 rounded-xl transition-all duration-200"
+                title="Refresh all data"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
+                title="Settings"
               >
                 <Settings className="w-5 h-5" />
               </motion.button>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={logout}
-                className="p-2 text-[#7D7F7C] hover:text-red-500 transition-colors duration-200"
+                className="p-3 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
+                title="Logout"
               >
                 <LogOut className="w-5 h-5" />
               </motion.button>
@@ -133,145 +89,72 @@ export const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Today's Overview</h2>
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-[#7D7F7C]" />
-              <span className="text-sm text-[#7D7F7C]">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </span>
+      {/* Main Dashboard Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Real-time Health Metrics Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            key={`metrics-${refreshKey}`}
+          >
+            <RealtimeHealthMetrics />
+          </motion.div>
+
+          {/* Daily Nutrition Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            key={`nutrition-${refreshKey}`}
+          >
+            <DailyNutritionSummary />
+          </motion.div>
+
+          {/* Food Diary Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            key={`diary-${refreshKey}`}
+          >
+            <FoodDiary onUpdateSummary={handleUpdateSummary} />
+          </motion.div>
+        </div>
+
+        {/* Quick Stats Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-12 text-center py-8 border-t border-gray-200"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#76B3A8] mb-1">
+                {new Date().toLocaleDateString("en-US", { day: "numeric" })}
+              </div>
+              <div className="text-sm text-gray-600">Days Active</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-500 mb-1">24/7</div>
+              <div className="text-sm text-gray-600">Health Monitoring</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-500 mb-1">Live</div>
+              <div className="text-sm text-gray-600">Data Sync</div>
             </div>
           </div>
 
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {metricCards.map((card, index) => {
-              const IconComponent = card.icon;
-              return (
-                <motion.div
-                  key={card.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => setSelectedMetric(card.id)}
-                  className={`${card.bgColor} rounded-2xl p-6 cursor-pointer transition-all duration-200 border-2 ${
-                    selectedMetric === card.id ? 'border-[#76B3A8]' : 'border-transparent'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-[#7D7F7C] text-sm font-medium mb-1">{card.title}</p>
-                      <p className="text-2xl font-bold text-gray-900 mb-1">{card.value}</p>
-                      <div className="flex items-center">
-                        <span className="text-green-600 text-sm font-medium">{card.change}</span>
-                        <span className="text-[#7D7F7C] text-xs ml-1">vs yesterday</span>
-                      </div>
-                    </div>
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: card.color }}
-                    >
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Chart Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">Progress Chart</h3>
-            <select 
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#76B3A8] focus:border-transparent"
-            >
-              {metricCards.map(metric => (
-                <option key={metric.id} value={metric.id}>
-                  {metric.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockHealthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  stroke="#7D7F7C"
-                />
-                <YAxis stroke="#7D7F7C" />
-                <Tooltip 
-                  labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey={selectedMetric}
-                  stroke="#76B3A8" 
-                  strokeWidth={3}
-                  dot={{ fill: '#76B3A8', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, fill: '#76B3A8' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Quick Add Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center p-6 border-2 border-dashed border-[#76B3A8] rounded-xl text-[#76B3A8] hover:bg-[#76B3A8]/5 transition-colors duration-200"
-            >
-              <Plus className="w-6 h-6 mr-3" />
-              Log Food
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center p-6 border-2 border-dashed border-[#76B3A8] rounded-xl text-[#76B3A8] hover:bg-[#76B3A8]/5 transition-colors duration-200"
-            >
-              <Plus className="w-6 h-6 mr-3" />
-              Add Exercise
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center p-6 border-2 border-dashed border-[#76B3A8] rounded-xl text-[#76B3A8] hover:bg-[#76B3A8]/5 transition-colors duration-200"
-            >
-              <Plus className="w-6 h-6 mr-3" />
-              Update Weight
-            </motion.button>
-          </div>
-        </div>
-      </div>
+          <p className="text-xs text-gray-500 mt-6">
+            Data updates every 5 seconds • Powered by advanced health sensors
+            and AI nutrition analysis
+          </p>
+        </motion.div>
+      </main>
     </div>
   );
 };

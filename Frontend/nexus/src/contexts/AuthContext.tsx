@@ -53,10 +53,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Check for successful login response
       if (response.message === "Login successful" && response.tokens) {
-        // Store JWT token in secure cookie
-        Cookies.set("token", response.tokens, {
+        // Store JWT access token in secure cookie (extract from tokens object)
+        Cookies.set("token", response.tokens.access, {
           expires: 7,
           secure: window.location.protocol === "https:", // Only secure in production
+          sameSite: "strict",
+        });
+
+        // Optionally store refresh token
+        Cookies.set("refresh_token", response.tokens.refresh, {
+          expires: 30, // Refresh tokens typically last longer
+          secure: window.location.protocol === "https:",
           sameSite: "strict",
         });
 
@@ -110,6 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     Cookies.remove("token");
+    Cookies.remove("refresh_token");
     setUser(null);
   };
 
