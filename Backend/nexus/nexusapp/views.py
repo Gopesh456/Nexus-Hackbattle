@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest
-from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer
+from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
+from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer, MedicationDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
@@ -569,11 +569,116 @@ def get_liver_function_test(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def store_medication_details(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Map the input field names to database field names
+    field_mapping = {
+        'Medicine_name': 'medicine_name',
+        'Frequency': 'frequency',
+        'Medical_Condition': 'medical_condition',
+        'No_of_pills': 'no_of_pills',
+        'next_order_data': 'next_order_date',
+        'meds_reminder': 'meds_reminder'
+    }
+    
+    # Transform the request data to match database field names
+    transformed_data = request.data.copy()
+    for input_field, db_field in field_mapping.items():
+        if input_field in transformed_data:
+            transformed_data[db_field] = transformed_data.pop(input_field)
+    
+    # Check if user already has medication details
+    try:
+        medication = MedicationDetails.objects.get(user=user)
+        serializer = MedicationDetailsSerializer(medication, data=transformed_data, partial=True)
+    except MedicationDetails.DoesNotExist:
+        serializer = MedicationDetailsSerializer(data=transformed_data)
+    
+    if serializer.is_valid():
+        serializer.save(user=user)
+        return Response({
+            'message': 'Medication details stored successfully'
+        }, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_medication_details(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        medication = MedicationDetails.objects.get(user=user)
+        serializer = MedicationDetailsSerializer(medication)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except MedicationDetails.DoesNotExist:
+        return Response({
+            'error': 'No medication details found for this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def get_food_nutrition(request):
     """
     Get nutrition information for a food item from USDA API and store it for the authenticated user
-    Expected input: {"token": "jwt_token", "food_name": "apple", "quantity": 150, "unit": "g"}
+    Expected input: {
+        "token": "jwt_token", 
+        "food_name": "Apple", 
+        "quantity": 100, 
+        "unit": "g", 
+        "time": "08:30", 
+        "meal_type": "breakfast"
+    }
     Available units: g (grams), kg (kilograms), oz (ounces), lb (pounds), cup (cups), ml (milliliters), l (liters)
+    Available meal types: breakfast, lunch, dinner, snack
     """
     # Get token from request body
     token = request.data.get('token')
@@ -608,6 +713,8 @@ def get_food_nutrition(request):
     food_name = serializer.validated_data['food_name']
     quantity = serializer.validated_data['quantity']
     unit = serializer.validated_data.get('unit', 'g')
+    time = serializer.validated_data.get('time')
+    meal_type = serializer.validated_data.get('meal_type')
     
     try:
         # Step 1: Search for the food item in USDA database
@@ -692,6 +799,8 @@ def get_food_nutrition(request):
             food_name=food_name,
             quantity=quantity,
             unit=unit,
+            time=time,
+            meal_type=meal_type,
             usda_food_id=str(fdc_id),
             calories_per_100g=nutrients['calories'],
             protein_per_100g=nutrients['protein'],
@@ -706,6 +815,8 @@ def get_food_nutrition(request):
             'food_name': food_name,
             'quantity': quantity,
             'unit': unit,
+            'time': time.strftime('%H:%M') if time else None,
+            'meal_type': meal_type,
             'quantity_in_grams': quantity_in_grams,
             'nutrition_per_100g': nutrients,
             'total_nutrition': total_nutrition,
@@ -726,6 +837,183 @@ def get_food_nutrition(request):
             'error': 'An unexpected error occurred',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_nutrition_item(request):
+    """
+    Edit a saved nutrition item for the authenticated user
+    Expected input: {
+        "token": "jwt_token",
+        "item_id": 123,
+        "food_name": "Apple", 
+        "quantity": 100,
+        "unit": "g",
+        "time": "08:30",
+        "meal_type": "breakfast"
+    }
+    """
+    # Get token from request body
+    token = request.data.get('token')
+    item_id = request.data.get('item_id')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    if not item_id:
+        return Response({
+            'error': 'item_id is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Get the nutrition item to edit (ensure it belongs to the user)
+        nutrition_item = FoodNutrition.objects.get(id=item_id, user=user)
+    except FoodNutrition.DoesNotExist:
+        return Response({
+            'error': 'Nutrition item not found or does not belong to this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Validate input data
+    serializer = FoodInputSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Extract validated data
+    food_name = serializer.validated_data['food_name']
+    quantity = serializer.validated_data['quantity']
+    unit = serializer.validated_data.get('unit', 'g')
+    time = serializer.validated_data.get('time')
+    meal_type = serializer.validated_data.get('meal_type')
+    
+    # Update the nutrition item
+    nutrition_item.food_name = food_name
+    nutrition_item.quantity = quantity
+    nutrition_item.unit = unit
+    nutrition_item.time = time
+    nutrition_item.meal_type = meal_type
+    
+    # Recalculate nutrition values if we have the per 100g data
+    if nutrition_item.calories_per_100g is not None:
+        quantity_in_grams = nutrition_item.convert_to_grams()
+        multiplier = quantity_in_grams / 100
+        
+        nutrition_item.total_calories = nutrition_item.calories_per_100g * multiplier
+        nutrition_item.total_protein = (nutrition_item.protein_per_100g or 0) * multiplier
+        nutrition_item.total_carbs = (nutrition_item.carbs_per_100g or 0) * multiplier
+        nutrition_item.total_fat = (nutrition_item.fat_per_100g or 0) * multiplier
+        nutrition_item.total_fiber = (nutrition_item.fiber_per_100g or 0) * multiplier
+        nutrition_item.total_sugar = (nutrition_item.sugar_per_100g or 0) * multiplier
+    
+    nutrition_item.save()
+    
+    # Return updated data
+    response_data = {
+        'message': 'Nutrition item updated successfully',
+        'item_id': nutrition_item.id,
+        'food_name': nutrition_item.food_name,
+        'quantity': nutrition_item.quantity,
+        'unit': nutrition_item.unit,
+        'time': nutrition_item.time.strftime('%H:%M') if nutrition_item.time else None,
+        'meal_type': nutrition_item.meal_type,
+        'total_nutrition': {
+            'calories': round(nutrition_item.total_calories or 0, 2),
+            'protein': round(nutrition_item.total_protein or 0, 2),
+            'carbohydrates': round(nutrition_item.total_carbs or 0, 2),
+            'fat': round(nutrition_item.total_fat or 0, 2),
+            'fiber': round(nutrition_item.total_fiber or 0, 2),
+            'sugar': round(nutrition_item.total_sugar or 0, 2)
+        }
+    }
+    
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def delete_nutrition_item(request):
+    """
+    Delete a saved nutrition item for the authenticated user
+    Expected input: {
+        "token": "jwt_token",
+        "item_id": 123
+    }
+    """
+    # Get token from request body
+    token = request.data.get('token')
+    item_id = request.data.get('item_id')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    if not item_id:
+        return Response({
+            'error': 'item_id is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Get the nutrition item to delete (ensure it belongs to the user)
+        nutrition_item = FoodNutrition.objects.get(id=item_id, user=user)
+    except FoodNutrition.DoesNotExist:
+        return Response({
+            'error': 'Nutrition item not found or does not belong to this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Store item info before deletion for response
+    item_info = {
+        'item_id': nutrition_item.id,
+        'food_name': nutrition_item.food_name,
+        'quantity': nutrition_item.quantity,
+        'unit': nutrition_item.unit
+    }
+    
+    # Delete the item
+    nutrition_item.delete()
+    
+    return Response({
+        'message': 'Nutrition item deleted successfully',
+        'deleted_item': item_info
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

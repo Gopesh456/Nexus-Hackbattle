@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest
+from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
 from .models import FoodNutrition, UserNutritionGoals
 
 class UserSerializer(serializers.ModelSerializer):
@@ -89,6 +89,16 @@ class LiverFunctionTestSerializer(serializers.ModelSerializer):
         read_only_fields = ('user',)
 
 
+class MedicationDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationDetails
+        fields = (
+            'medicine_name', 'frequency', 'medical_condition', 'no_of_pills',
+            'next_order_date', 'meds_reminder'
+        )
+        read_only_fields = ('user',)
+
+
 class FoodNutritionSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     
@@ -111,6 +121,13 @@ class FoodInputSerializer(serializers.Serializer):
         ('ml', 'milliliters'),
         ('l', 'liters')
     ], default='g')
+    time = serializers.TimeField(required=False, help_text="Time in HH:MM format (e.g., '08:30')")
+    meal_type = serializers.ChoiceField(choices=[
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('dinner', 'Dinner'),
+        ('snack', 'Snack')
+    ], required=False)
 
 
 class NutritionResponseSerializer(serializers.Serializer):

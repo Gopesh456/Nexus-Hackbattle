@@ -123,6 +123,24 @@ class LiverFunctionTest(models.Model):
 		return f"Liver Function Test - {self.user.username}"
 
 
+class MedicationDetails(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='medication_details')
+	
+	# Medication information
+	medicine_name = models.CharField(max_length=255, blank=True, help_text="Name of the medication")
+	frequency = models.CharField(max_length=100, blank=True, help_text="How often to take the medication (e.g., 'twice daily')")
+	medical_condition = models.CharField(max_length=255, blank=True, help_text="Medical condition being treated")
+	no_of_pills = models.IntegerField(null=True, blank=True, help_text="Number of pills per dose")
+	next_order_date = models.DateField(null=True, blank=True, help_text="Date when next order is needed")
+	meds_reminder = models.BooleanField(default=False, help_text="Enable medication reminders")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Medication Details - {self.user.username}"
+
+
 class UserNutritionGoals(models.Model):
 	"""Store user's daily nutrition goals"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='nutrition_goals')
@@ -150,10 +168,19 @@ class FoodNutrition(models.Model):
 		('l', 'liters')
 	]
 	
+	MEAL_TYPE_CHOICES = [
+		('breakfast', 'Breakfast'),
+		('lunch', 'Lunch'),
+		('dinner', 'Dinner'),
+		('snack', 'Snack')
+	]
+	
 	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='food_entries', null=True, blank=True)  # Link to authenticated user
 	food_name = models.CharField(max_length=255)
 	quantity = models.FloatField()
 	unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default='g')
+	time = models.TimeField(null=True, blank=True, help_text="Time when food was consumed (HH:MM format)")
+	meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, null=True, blank=True, help_text="Type of meal")
 	usda_food_id = models.CharField(max_length=100, null=True, blank=True)
 	
 	# Macronutrients (per 100g)
