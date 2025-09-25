@@ -59,13 +59,12 @@ med_task:
       "medicine_name": "string",
       "medicine_dosage": "string",
       "medicine_frequency": "string",
+      "medical_condition" : "string",
       "medicine_timing": ["string"],
-      "medicine_quantity_available": "integer",
-      "medicine_special_instructions": "string",
-      "reminder_medicine": "string",
-      "reminder_time": "string",
-      "reminder_dosage": "string",
-      "restock_date": "string (yyyy-mm-dd)"
+
+
+      "restock_date": "string (yyyy-mm-dd)",
+      "reminder_time": "string"
     }
 
 guardian_task:
@@ -149,3 +148,4 @@ voice_task:
       "assistance_details": "string",
       "interaction_summary": "string"
     }
+
