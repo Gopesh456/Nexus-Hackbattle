@@ -398,18 +398,120 @@ class HospitalSearchToolInput(BaseModel):
     specialty: str = Field(default="", description="Medical specialty to filter hospitals by (optional)")
 
 
+class UserSelectionToolInput(BaseModel):
+    """Input schema for UserSelectionTool."""
+    options: str = Field(..., description="JSON string containing hospital data with nearest_hospital and preferred_hospital")
+    selection_type: str = Field(..., description="Type of selection: 'hospital' or 'doctor'")
+    user_preference: str = Field(default="", description="User's preferred doctor name (optional)")
+
+
+class UserSelectionTool(BaseTool):
+    name: str = "user_selection"
+    description: str = (
+        "Handle user preferences and selections for hospitals and doctors from structured hospital data. "
+        "For doctor selection, if the preferred doctor is not available, automatically selects the next best doctor by rating. "
+        "Allows choosing between nearest hospital and preferred hospital options."
+    )
+    args_schema: Type[BaseModel] = UserSelectionToolInput
+
+    def _run(self, options: str, selection_type: str, user_preference: str = "") -> str:
+        """Handle user selection for hospitals or doctors."""
+        try:
+            # Parse the options JSON
+            import json
+            hospital_data = json.loads(options)
+
+            if selection_type == "hospital":
+                return self._handle_hospital_selection(hospital_data, user_preference)
+            elif selection_type == "doctor":
+                return self._handle_doctor_selection(hospital_data, user_preference)
+            else:
+                return f"Invalid selection type: {selection_type}. Use 'hospital' or 'doctor'."
+
+        except json.JSONDecodeError:
+            return f"Error parsing options JSON: {options}"
+        except Exception as e:
+            return f"Error in user selection: {str(e)}"
+
+    def _handle_hospital_selection(self, hospital_data: dict, user_preference: str = "") -> str:
+        """Handle hospital selection logic."""
+        # For now, default to nearest hospital since that's the primary requirement
+        nearest_hospital = hospital_data.get('nearest_hospital')
+        if nearest_hospital:
+            return json.dumps({
+                "selection_type": "hospital",
+                "selected_hospital": nearest_hospital,
+                "selection_method": "nearest_hospital",
+                "available_options": [nearest_hospital, hospital_data.get('preferred_hospital')]
+            })
+
+        return json.dumps({"error": "No hospitals available for selection"})
+
+    def _handle_doctor_selection(self, hospital_data: dict, user_preference: str = "") -> str:
+        """Handle doctor selection logic with fallback to next best doctor."""
+        nearest_hospital = hospital_data.get('nearest_hospital', {})
+        preferred_hospital = hospital_data.get('preferred_hospital', {})
+
+        if user_preference:
+            # User has specified a preferred doctor - search in both hospitals
+            all_doctors = []
+            all_doctors.extend(nearest_hospital.get('doctors', []))
+            all_doctors.extend(preferred_hospital.get('doctors', []))
+
+            # Look for exact match first
+            for doctor in all_doctors:
+                if user_preference.lower() in doctor.get('doctor_name', '').lower():
+                    # Find which hospital this doctor belongs to
+                    hospital = nearest_hospital if doctor in nearest_hospital.get('doctors', []) else preferred_hospital
+                    return json.dumps({
+                        "selection_type": "doctor",
+                        "selected_doctor": doctor,
+                        "selected_hospital": hospital,
+                        "selection_method": "user_preference_found",
+                        "selection_reason": f"Found your preferred doctor: {doctor.get('doctor_name')}"
+                    })
+
+        # If no preference or preference not found, select best doctor from nearest hospital
+        nearest_doctors = nearest_hospital.get('doctors', [])
+        if nearest_doctors:
+            # Sort doctors by rating (highest first)
+            sorted_doctors = sorted(nearest_doctors, 
+                                  key=lambda x: float(x.get('rating', '0').split('/')[0]), 
+                                  reverse=True)
+            best_doctor = sorted_doctors[0]
+
+            reason = f"Selected highest rated doctor: {best_doctor.get('doctor_name')} ({best_doctor.get('rating')})"
+            if user_preference:
+                reason = f"Your preferred doctor '{user_preference}' was not found. {reason}"
+
+            return json.dumps({
+                "selection_type": "doctor",
+                "selected_doctor": best_doctor,
+                "selected_hospital": nearest_hospital,
+                "selection_method": "auto_selected_best_rated",
+                "selection_reason": reason,
+                "available_doctors": sorted_doctors[:3]  # Show top 3 options
+            })
+
+        return json.dumps({"error": "No doctors available for selection"})
+
+
+class HospitalSearchToolInput(BaseModel):
+    """Input schema for HospitalSearchTool."""
+    location: str = Field(default="VIT Vellore", description="Location to search for hospitals near")
+    specialty: str = Field(default="", description="Medical specialty to filter hospitals by (optional)")
+
+
 class HospitalSearchTool(BaseTool):
     name: str = "hospital_search"
     description: str = (
-        "Search for hospitals near a specific location using AI-powered web browsing. "
-        "Finds hospitals, their contact information, available specialists, ratings, "
-        "and other relevant healthcare facility details. Particularly useful for "
-        "finding emergency care, specialist consultations, and healthcare services."
+        "Search for the nearest hospital to VIT Vellore based on ratings and collect contact information. "
+        "Finds the highest-rated hospital closest to VIT Vellore with contact details and available specialists."
     )
     args_schema: Type[BaseModel] = HospitalSearchToolInput
 
     def _run(self, location: str = "VIT Vellore", specialty: str = "") -> str:
-        """Search for hospitals near the specified location."""
+        """Search for the nearest hospital to VIT Vellore based on ratings."""
         try:
             # Get Groq API key
             api_key = os.getenv('GROQ_API_KEY')
@@ -423,38 +525,64 @@ class HospitalSearchTool(BaseTool):
                 temperature=0.3
             )
 
-            # Build search task based on inputs
+            # Build search task focused on nearest hospital by ratings
             if specialty:
                 task = f"""
-                Search for hospitals near {location} that specialize in {specialty}.
-                Find and extract the following information for each hospital:
-                - Hospital name
-                - Address and location
-                - Contact phone number
-                - Available specialists/doctors in {specialty}
-                - Hospital rating/review score
-                - Emergency services availability
-                - Distance from {location}
-                - Website if available
+                Find the NEAREST hospital to {location} with the BEST ratings that specializes in {specialty}.
+                Focus on finding the single highest-rated hospital closest to {location}.
 
-                Present the information in a clear, structured format.
-                Focus on the top 3-5 most relevant hospitals.
+                CRITICAL: Make sure to collect the COMPLETE contact phone number.
+
+                Return information for this hospital:
+                1. Hospital name
+                2. COMPLETE contact phone number (include area code, all digits)
+                3. Hospital rating/review score
+                4. Distance from {location}
+                5. Full address
+                6. Available specialists in {specialty}
+                7. Emergency services availability
+
+                Structure the response as JSON with this exact format:
+                {{
+                  "hospital_name": "Hospital Name",
+                  "hospital_contact": "Complete Phone Number",
+                  "hospital_rating": "4.8/5",
+                  "hospital_distance_km": 2.5,
+                  "hospital_address": "Full Address",
+                  "available_specialists": ["{specialty}"],
+                  "emergency_services": true
+                }}
+
+                PRIORITY: Ensure the contact number is complete and accurate.
                 """
             else:
                 task = f"""
-                Search for hospitals near {location}.
-                Find and extract the following information for each hospital:
-                - Hospital name
-                - Address and location
-                - Contact phone number
-                - Available medical specialties
-                - Hospital rating/review score
-                - Emergency services availability
-                - Distance from {location}
-                - Website if available
+                Find the NEAREST hospital to {location} with the BEST ratings.
+                Focus on finding the single highest-rated hospital closest to {location}.
 
-                Present the information in a clear, structured format.
-                Focus on the top 3-5 most relevant hospitals.
+                CRITICAL: Make sure to collect the COMPLETE contact phone number.
+
+                Return information for this hospital:
+                1. Hospital name
+                2. COMPLETE contact phone number (include area code, all digits)
+                3. Hospital rating/review score
+                4. Distance from {location}
+                5. Full address
+                6. Available medical specialties
+                7. Emergency services availability
+
+                Structure the response as JSON with this exact format:
+                {{
+                  "hospital_name": "Hospital Name",
+                  "hospital_contact": "Complete Phone Number",
+                  "hospital_rating": "4.8/5",
+                  "hospital_distance_km": 2.5,
+                  "hospital_address": "Full Address",
+                  "available_specialists": ["General Medicine"],
+                  "emergency_services": true
+                }}
+
+                PRIORITY: Ensure the contact number is complete and accurate.
                 """
 
             # Create browser agent
@@ -484,7 +612,8 @@ json_storage_tool = JSONStorageTool()
 json_response_tool = JSONResponseTool()
 json_processor_tool = JSONProcessorTool()
 hospital_search_tool = HospitalSearchTool()
+user_selection_tool = UserSelectionTool()
 
 # Export tools for CrewAI
-tools = [browser_tool, web_search_tool, json_storage_tool, json_response_tool, json_processor_tool, hospital_search_tool]
+tools = [browser_tool, web_search_tool, json_storage_tool, json_response_tool, json_processor_tool, hospital_search_tool, user_selection_tool]
 

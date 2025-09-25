@@ -222,7 +222,7 @@ def test():
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("🏥 HealthGuard - No arguments provided, starting interactive mode...")
+        print("HealthGuard - No arguments provided, starting interactive mode...")
         interactive_agent_selection()
         sys.exit(0)
 

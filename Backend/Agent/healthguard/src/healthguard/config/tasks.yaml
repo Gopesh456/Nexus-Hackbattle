@@ -4,8 +4,9 @@ nurse_task:
     1.Collecting the symptoms from the user.
     2.Asessing the severity of the symptoms (low, high, emergency).
     3.Identifying the most suitable specialist according to the symptoms.
-    4.Always finding and directing the patient to a hospital nearby , having the required speciality doctor.
-    5.Documenting the appointment details and summarizing it in a strcutured, clear, JSON format.
+    4.Use the hospital_search tool to find the nearest hospital to VIT Vellore based on ratings and collect its contact number.
+    5.Provide the hospital contact information prominently in the response.
+    6.Documenting the appointment details and summarizing it in a structured, clear, JSON format.
 
   expected_output: >
     JSON object with the following structure:
@@ -14,14 +15,17 @@ nurse_task:
       "user_age": "integer",
       "user_symptoms": ["string"],
       "assessment_urgency_level": "string",
-      "hospital_name": "string",
-      "hospital_address": "string",
-      "hospital_distance_km": "float",
-      "appointment_status": "string",
-      "appointment_doctor": "string",
-      "appointment_department": "string",
-      "appointment_date": "string (dd-mm-yyyy)",
-      "appointment_time": "string (hh:mm AM/PM)",
+      "nearest_hospital": {
+        "hospital_name": "string",
+        "hospital_contact": "string",
+        "hospital_address": "string"
+      },
+      "appointment_details": {
+        "appointment_status": "string",
+        "appointment_department": "string",
+        "appointment_date": "string (dd-mm-yyyy)",
+        "appointment_time": "string (hh:mm AM/PM)"
+      },
       "confirmation_message": "Your appointment has been successfully booked. Please check the details above."
     }
 
