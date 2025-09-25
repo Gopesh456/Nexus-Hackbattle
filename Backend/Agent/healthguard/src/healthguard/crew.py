@@ -26,6 +26,14 @@ class Healthguard():
         )
 
     @agent
+    def labs_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['labs_agent'], # type: ignore[index]
+            llm=ChatGroq(model="groq/llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY")),
+            verbose=True
+        )
+
+    @agent
     def reporting_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['reporting_analyst'], # type: ignore[index]
@@ -39,6 +47,12 @@ class Healthguard():
     def research_task(self) -> Task:
         return Task(
             config=self.tasks_config['research_task'], # type: ignore[index]
+        )
+
+    @task
+    def labs_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['labs_task'], # type: ignore[index]
         )
 
     @task

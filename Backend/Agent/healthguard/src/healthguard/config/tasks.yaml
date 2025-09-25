@@ -23,11 +23,10 @@ nurse_task:
       "appointment_date": "string (yyyy-mm-dd)",
       "appointment_time": "string (hh:mm AM/PM)",
       "confirmation_message": "Your appointment with {doctor} has been successfully booked for {date} at {time}."
-    } 
+    }
 
-
-  med_task:
-    description: >
+med_task:
+  description: >
      You are a virtual medical assistant specialized in helping patients manage their medicines. 
 
      Your responsibilities are:
@@ -50,7 +49,7 @@ nurse_task:
 
       4.Document the medicine details, reminder schedule, and restock date in a clear, structured JSON format:
 
-    expected_output: >
+     expected_output: >
       JSON object with the following structure:
       {
         "medicine_name": "string",
@@ -96,38 +95,57 @@ nurse_task:
 
   labs_task:
     description: >
-      You are a specialized Lab Report Image Processor. When given a lab report image, you must extract ALL necessary data and provide a comprehensive JSON output.
+      You are a specialized Lab Report Image Processor powered by Groq's vision-capable LLM. You process lab report images stored in the images folder by converting them to base64 and sending them to Groq for advanced AI analysis.
 
-      Your core responsibilities:
+      Your automated workflow:
 
-      1. **Image Analysis**: Process the uploaded lab report image using OCR technology:
-         - Extract all visible text from the image
-         - Handle various image qualities (scanned documents, phone photos, etc.)
-         - Support multiple formats (JPEG, PNG, TIFF, BMP, PDF)
-         - Apply image preprocessing for optimal text recognition
+      1. **Image Loading and Conversion**:
+         - Automatically scan the images folder for lab report images
+         - Support multiple formats: JPEG, PNG, TIFF, BMP, PDF
+         - Convert each image to base64 encoding for LLM processing
+         - Handle image preprocessing and optimization for better analysis
+         - Manage batch processing of multiple lab reports
 
-      2. **Complete Data Extraction**: Identify and collect ALL available information:
-         - **Patient Information**: Name, age, gender, patient ID, contact details
-         - **Laboratory Details**: Lab name, address, contact information, report ID
-         - **Test Metadata**: Report date, collection date, received date, report type
-         - **ALL Lab Parameters**: Extract every single test parameter with its value and unit
-         - **Reference Ranges**: Normal ranges for each parameter
-         - **Doctor Information**: Ordering physician, reviewing pathologist
+      2. **Groq LLM Integration**:
+         - Send base64-encoded images to Groq's vision-capable models (llava-v1.5-7b-4096-preview or llama-3.2-90b-vision-preview)
+         - Use specialized medical prompts for accurate lab report analysis
+         - Leverage Groq's fast inference for real-time processing
+         - Handle API authentication and error management
+         - Optimize prompts for maximum data extraction accuracy
 
-      3. **Comprehensive Parameter Collection**: Extract ALL types of lab tests including:
-         - Complete Blood Count (CBC): Hemoglobin, Hematocrit, RBC, WBC, Platelets, MCV, MCH, MCHC, RDW
-         - Blood Chemistry: Glucose, Creatinine, BUN, Sodium, Potassium, Chloride, CO2, Calcium, Protein
-         - Lipid Profile: Total Cholesterol, HDL, LDL, Triglycerides, VLDL
-         - Liver Function: ALT, AST, Alkaline Phosphatase, Total Bilirubin, Direct Bilirubin, GGT
-         - Thyroid Function: TSH, Free T4, Free T3, Total T4, Total T3
-         - Cardiac Markers: Troponin, CK-MB, BNP, D-Dimer
-         - Inflammatory Markers: ESR, CRP, Procalcitonin
-         - Vitamins: Vitamin D, B12, Folate, Iron studies
-         - Hormones: Testosterone, Estrogen, Cortisol, Insulin
-         - Tumor Markers: PSA, CEA, CA-125, AFP
-         - Coagulation: PT, PTT, INR
-         - Urinalysis: Specific gravity, protein, glucose, ketones, blood, nitrites
-         - ANY OTHER PARAMETERS visible in the report
+      3. **Comprehensive Data Extraction via AI Vision**:
+         - **Patient Information**: Name, age, gender, patient ID, contact details, medical record number
+         - **Laboratory Details**: Lab name, address, contact information, report ID, accreditation info
+         - **Test Metadata**: Report date, collection date, received date, report type, specimen type
+         - **ALL Lab Parameters**: Extract every single test parameter with its value, unit, and status
+         - **Reference Ranges**: Normal ranges, critical values, and age/gender-specific ranges
+         - **Doctor Information**: Ordering physician, reviewing pathologist, contact information
+         - **Quality Indicators**: Sample quality, collection method, processing notes
+
+      4. **Advanced Parameter Recognition**:
+         - **Complete Blood Count (CBC)**: Hemoglobin, Hematocrit, RBC, WBC, Platelets, MCV, MCH, MCHC, RDW, Neutrophils, Lymphocytes, Monocytes, Eosinophils, Basophils
+         - **Comprehensive Metabolic Panel**: Glucose, Creatinine, BUN, Sodium, Potassium, Chloride, CO2, Calcium, Total Protein, Albumin, Globulin
+         - **Lipid Profile**: Total Cholesterol, HDL, LDL, Triglycerides, VLDL, Non-HDL Cholesterol, Cholesterol Ratios
+         - **Liver Function Tests**: ALT, AST, Alkaline Phosphatase, Total Bilirubin, Direct Bilirubin, Indirect Bilirubin, GGT, LDH
+         - **Thyroid Function**: TSH, Free T4, Free T3, Total T4, Total T3, Reverse T3, Thyroglobulin, Anti-TPO
+         - **Cardiac Markers**: Troponin I/T, CK-MB, BNP, NT-proBNP, D-Dimer, Homocysteine
+         - **Inflammatory Markers**: ESR, CRP, Procalcitonin, Ferritin, Complement C3/C4
+         - **Diabetes Markers**: HbA1c, Fasting Glucose, Random Glucose, Insulin, C-Peptide
+         - **Vitamins and Minerals**: Vitamin D, B12, B6, Folate, Iron, TIBC, Transferrin Saturation, Magnesium, Phosphorus, Zinc
+         - **Hormones**: Testosterone, Estrogen, Progesterone, Cortisol, DHEA-S, FSH, LH, Prolactin
+         - **Tumor Markers**: PSA, CEA, CA-125, CA 19-9, AFP, Beta-HCG
+         - **Coagulation Studies**: PT, PTT, INR, Fibrinogen, Platelet Function
+         - **Urinalysis**: Specific Gravity, pH, Protein, Glucose, Ketones, Blood, Nitrites, Leukocyte Esterase, Microscopy
+         - **Immunology**: Immunoglobulins, Autoantibodies, Allergy Panels
+         - **Infectious Disease**: Hepatitis Panel, HIV, Syphilis, Culture Results
+         - **ANY OTHER PARAMETERS** visible in the report
+
+      5. **AI-Powered Medical Analysis**:
+         - Use Groq's advanced reasoning to interpret lab values
+         - Cross-reference multiple parameters for comprehensive analysis
+         - Identify patterns and correlations between different test results
+         - Generate clinical insights based on latest medical knowledge
+         - Provide severity assessment and risk stratification
 
       4. **Medical Analysis**: Analyze all extracted values:
          - Compare each parameter against its normal range
@@ -142,42 +160,56 @@ nurse_task:
          - Include raw extracted text for verification
 
     expected_output: >
-      Complete JSON object containing ALL extracted data:
+      Complete JSON object from Groq LLM analysis containing ALL extracted data:
       {
-        "lab_test_name": "string - Full name of the lab test/panel",
+        "processing_info": {
+          "image_source": "string - Path to processed image from images folder",
+          "processing_method": "Hybrid OCR + Groq Text Analysis",
+          "groq_model": "meta-llama/llama-4-scout-17b-16e-instruct",
+          "ocr_text_length": "integer - Length of extracted text characters",
+          "processing_time": "float - Time taken for complete analysis in seconds",
+          "api_response_tokens": "integer - Number of tokens used in Groq analysis"
+        },
+        "lab_test_name": "string - Full name of the lab test/panel identified by Groq",
         "lab_date_conducted": "string (yyyy-mm-dd) - Date when samples were collected",
-        "report_date": "string (yyyy-mm-dd) - Date when report was generated",
-        "patient_name": "string - Full patient name",
+        "report_date": "string (yyyy-mm-dd) - Date when report was generated", 
+        "patient_name": "string - Full patient name extracted by vision AI",
         "patient_age": "integer - Patient age in years",
         "patient_gender": "string - Male/Female/Other",
         "patient_id": "string - Patient identification number",
+        "medical_record_number": "string - Hospital MRN if available",
         "lab_name": "string - Name of the laboratory",
-        "lab_address": "string - Laboratory address",
+        "lab_address": "string - Complete laboratory address",
+        "lab_phone": "string - Laboratory contact number",
         "doctor_name": "string - Ordering physician name",
+        "doctor_npi": "string - Physician NPI number if available",
         "report_id": "string - Lab report reference number",
+        "specimen_type": "string - Type of specimen (blood, urine, etc.)",
+        "collection_time": "string - Time of specimen collection",
         "lab_results": {
           "parameter_name_1": {
-            "value": "numeric_value",
+            "value": "numeric_value_extracted_by_ai",
             "unit": "measurement_unit",
-            "status": "normal/abnormal/critical"
+            "status": "normal/abnormal/critical",
+            "flag": "H/L/Critical if abnormal",
+            "reference_range": "normal_range_for_this_parameter"
           },
           "parameter_name_2": {
-            "value": "numeric_value", 
-            "unit": "measurement_unit",
-            "status": "normal/abnormal/critical"
+            "value": "numeric_value_extracted_by_ai",
+            "unit": "measurement_unit", 
+            "status": "normal/abnormal/critical",
+            "flag": "H/L/Critical if abnormal",
+            "reference_range": "normal_range_for_this_parameter"
           }
-        },
-        "lab_normal_ranges": {
-          "parameter_name_1": "normal_range_string",
-          "parameter_name_2": "normal_range_string"
         },
         "abnormal_values": [
           {
             "parameter": "parameter_name",
             "value": "current_value",
             "normal_range": "expected_range",
-            "severity": "abnormal/critical",
-            "clinical_significance": "brief_explanation"
+            "severity": "abnormal/critical/borderline",
+            "clinical_significance": "AI-generated clinical explanation",
+            "trend": "increasing/decreasing/stable if historical data available"
           }
         ],
         "critical_values": [
@@ -188,27 +220,53 @@ nurse_task:
             "immediate_action": "recommended_action"
           }
         ],
-        "interpretation_summary": "string - Overall health assessment summary",
+        "groq_ai_insights": {
+          "clinical_summary": "string - AI-generated comprehensive summary of lab findings",
+          "risk_assessment": "string - AI assessment of health risks and implications",
+          "differential_diagnosis": ["condition_1", "condition_2"],
+          "follow_up_recommendations": [
+            "ai_recommendation_1",
+            "ai_recommendation_2"
+          ],
+          "lifestyle_suggestions": [
+            "lifestyle_advice_1",
+            "lifestyle_advice_2"
+          ]
+        },
+        "interpretation_summary": "string - Overall health assessment enhanced by Groq AI",
         "clinical_recommendations": [
-          "recommendation_1",
-          "recommendation_2",
-          "recommendation_3"
+          "ai_enhanced_recommendation_1",
+          "ai_enhanced_recommendation_2", 
+          "ai_enhanced_recommendation_3"
         ],
-        "follow_up_required": "boolean - Whether follow-up is needed",
-        "urgency_level": "string - low/medium/high/critical",
-        "parameters_extracted": "integer - Total number of parameters found",
-        "extraction_confidence": "float - Confidence score (0.0-1.0)",
-        "raw_extracted_text": "string - Complete OCR text from image",
+        "follow_up_required": "boolean - Whether follow-up is needed based on AI analysis",
+        "urgency_level": "string - low/medium/high/critical determined by AI",
+        "parameters_extracted": "integer - Total number of parameters found by Groq vision",
+        "data_quality_metrics": {
+          "extraction_confidence": "float - Overall confidence score (0.0-1.0)",
+          "image_clarity": "float - Image quality assessment (0.0-1.0)", 
+          "text_readability": "float - OCR text clarity (0.0-1.0)",
+          "completeness": "float - Data completeness percentage"
+        },
+        "groq_processing_details": {
+          "model_used": "meta-llama/llama-4-scout-17b-16e-instruct",
+          "tokens_consumed": "integer - Total tokens used in text analysis",
+          "response_time": "float - API response time in seconds",
+          "processing_approach": "Hybrid OCR + LLM Text Analysis",
+          "api_version": "openai/v1"
+        },
+        "raw_extracted_text": "string - Complete text extracted by Groq vision AI",
         "processing_timestamp": "string (ISO datetime)",
         "processing_notes": [
-          "note_1_about_extraction_quality",
-          "note_2_about_any_limitations"
+          "groq_processing_observation_1",
+          "groq_processing_observation_2"
         ],
-        "message": "Lab report processed successfully. Extracted {parameters_extracted} parameters with {extraction_confidence}% confidence."
+        "groq_raw_response": "string - Complete raw response from Groq API for debugging",
+        "message": "Lab report processed successfully using Groq AI vision. Extracted {parameters_extracted} parameters with {extraction_confidence}% confidence using {model_used}."
       }
 
-    voice_task:
-      description: >
+voice_task:
+  description: >
         You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
 
         Your responsibilities include:
@@ -221,32 +279,60 @@ nurse_task:
 
         4. Documenting all interactions and responses in a structured JSON format for easy reference.
 
-      expected_output: >
-        JSON object with the following structure:
-        {
-          "user_command": "string",
-          "response": "string",
-          "assistance_task": "string",
-          "assistance_details": "string",
-          "interaction_summary": "string"
-        }
+  expected_output: >
+    JSON object with the following structure:
+    {
+      "user_command": "string",
+      "response": "string",
+      "assistance_task": "string",
+      "assistance_details": "string",
+      "interaction_summary": "string"
+    }
   food_task:
-    description: >
-      You are a helpful Food Diary assistant. Your role is to help users log their meals and analyze their nutritional intake. 
-      Your responsibilities include:
-      1. Identifying and recording food items from user inputs (typed or voice).
-      2. Estimating portion sizes and calculating total calories.
-      3. Breaking down macronutrients (carbs, protein, fat).
-      4. Comparing the meal’s nutrition with the user’s daily calorie and nutrition goals.
-      5. Providing clear and personalized feedback or health tips (e.g., suggest balance if carbs are too high).
-      6. Returning all information in a structured dictionary format, with no nested dictionaries.
- 
-    
+  description: >
+    📁 Latest Results: hybrid_lab_analysis_20250925_142426.json
+  expected_output: >
+    JSON object with the following structure:
+    {
+      "date": "string (yyyy-mm-dd)",
+      "breakfast_food_items": ["string"],
+      "breakfast_total_calories": "integer",
+      "breakfast_carbohydrates_g": "float",
+      "breakfast_protein_g": "float",
+      "breakfast_fat_g": "float",
+      "lunch_food_items": ["string"],
+      "lunch_total_calories": "integer",
+      "lunch_carbohydrates_g": "float",
+      "lunch_protein_g": "float",
+      "lunch_fat_g": "float",
+      "dinner_food_items": ["string"],
+      "dinner_total_calories": "integer",
+      "dinner_carbohydrates_g": "float",
+      "dinner_protein_g": "float",
+      "dinner_fat_g": "float",
+      "snacks_food_items": ["string"],
+      "snacks_total_calories": "integer",
+      "snacks_carbohydrates_g": "float",
+      "snacks_protein_g": "float",
+      "snacks_fat_g": "float",
+      "daily_total_calories": "integer",
+      "daily_total_carbohydrates_g": "float",
+      "daily_total_protein_g": "float",
+      "daily_total_fat_g": "float",
+      "daily_protein_goal_g": "float",
+      "protein_intake_g": "float",
+      "goal_achieved_percentage": "float"
+    }
 
+# Missing tasks referenced in crew.py
+research_task:
+  description: >
+    Research and analyze health-related topics to provide comprehensive information.
+  expected_output: >
+    A comprehensive research report with key findings and recommendations.
 
-
-
-
-
-
-
+reporting_task:
+  description: >
+    Generate detailed reports based on health data analysis and research findings.
+  expected_output: >
+    A structured markdown report summarizing all health analysis results.
