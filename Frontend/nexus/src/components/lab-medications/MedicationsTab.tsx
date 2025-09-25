@@ -249,7 +249,9 @@ export const MedicationsTab: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <Calendar className="w-5 h-5 text-blue-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Next Order</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          Next Order
+                        </p>
                         <p className="text-sm text-gray-600">
                           {formatDate(medication.nextOrderDate)}
                         </p>
@@ -266,7 +268,9 @@ export const MedicationsTab: React.FC = () => {
                     <div className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg">
                       <Bell className="w-5 h-5 text-yellow-600" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Daily Reminder</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          Daily Reminder
+                        </p>
                         <p className="text-sm text-gray-600">
                           Every day at {medication.reminderTime}
                         </p>

@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { RealtimeHealthMetrics } from "../components/dashboard/RealtimeHealthMetrics";
 import { DailyNutritionSummary } from "../components/dashboard/DailyNutritionSummary";
 import { FoodDiary } from "../components/dashboard/FoodDiary";
+import { SmartWatchMetrics } from "../components/smartwatch/SmartWatchMetrics";
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -92,6 +93,15 @@ export const Dashboard: React.FC = () => {
       {/* Main Dashboard Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
+          {/* SmartWatch Real-time Metrics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <SmartWatchMetrics />
+          </motion.div>
+
           {/* Real-time Health Metrics Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

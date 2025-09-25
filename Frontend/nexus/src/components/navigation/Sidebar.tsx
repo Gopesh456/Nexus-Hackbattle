@@ -1,7 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Home, Utensils, Bot, FlaskConical, LogOut, User } from "lucide-react";
+import { Home, Utensils, Bot, FlaskConical, LogOut, User, Settings } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { Notifications } from "../notifications/Notifications";
 
 interface SidebarProps {
   activePage: string;
@@ -37,6 +38,13 @@ const navigationItems = [
     color: "text-orange-600",
     bgColor: "bg-orange-50",
   },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: User,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50",
+  },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -49,14 +57,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#76B3A8] to-[#5A9B8E] rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">N</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-[#76B3A8] to-[#5A9B8E] rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">N</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Nexus</h1>
+              <p className="text-sm text-gray-500">Health Platform</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Nexus</h1>
-            <p className="text-sm text-gray-500">Health Platform</p>
-          </div>
+          
+          {/* Notifications */}
+          <Notifications />
         </div>
       </div>
 

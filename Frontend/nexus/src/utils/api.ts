@@ -80,6 +80,35 @@ class ApiClient {
     return this.post(endpoint, data);
   }
 
+  // Authentication endpoints
+  async register(username: string, password: string) {
+    const response = await this.post("register/", { username, password });
+    
+    // Store JWT token in cookie if registration is successful
+    if (response.tokens) {
+      Cookies.set("token", response.tokens, { expires: 7 }); // Store for 7 days
+    }
+    
+    return response;
+  }
+
+  async login(username: string, password: string) {
+    const response = await this.post("login/", { username, password });
+    
+    // Store JWT token in cookie if login is successful
+    if (response.tokens) {
+      Cookies.set("token", response.tokens, { expires: 7 }); // Store for 7 days
+    }
+    
+    return response;
+  }
+
+  async logout() {
+    // Remove token from cookies
+    Cookies.remove("token");
+    return Promise.resolve({ message: "Logged out successfully" });
+  }
+
   // Food Nutrition POST endpoints
   async addFoodEntry(
     foodName: string,
@@ -140,6 +169,10 @@ class ApiClient {
     return this.post("health/realtime/", {});
   }
 
+  // SmartWatch WebSocket connection info (for reference)
+  // The SmartWatchMetrics component connects directly to:
+  // wss://jarrod-senescent-beatris.ngrok-free.dev
+
   // User Goals POST endpoints
   async setNutritionGoals(goals: Record<string, unknown>) {
     return this.post("goals/", goals);
@@ -155,11 +188,24 @@ class ApiClient {
 
   // Basic Info POST endpoints (already have storeBasicInfo)
   async getBasicInfo() {
-    return this.post("basic-info/get/", {});
+    const token = Cookies.get("token");
+    return this.post("basic-info/get/", { token });
   }
 
   async updateBasicInfo(data: Record<string, unknown>) {
-    return this.post("basic-info/update/", data);
+    const token = Cookies.get("token");
+    return this.post("basic-info/update/", { ...data, token });
+  }
+
+  // Health Profile POST endpoints (already have storeHealthProfile)
+  async getHealthProfile() {
+    const token = Cookies.get("token");
+    return this.post("health-profile/get/", { token });
+  }
+
+  async updateHealthProfile(data: Record<string, unknown>) {
+    const token = Cookies.get("token");
+    return this.post("health-profile/update/", { ...data, token });
   }
 }
 

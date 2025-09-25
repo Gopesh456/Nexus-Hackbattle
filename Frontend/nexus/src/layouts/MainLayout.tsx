@@ -4,6 +4,7 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { FoodDiaryPage } from "../pages/FoodDiaryPage";
 import { NurseAgentPage } from "../pages/NurseAgentPage";
 import { LabMedicationsPage } from "../pages/LabMedicationsPage";
+import { ProfilePage } from "../pages/ProfilePage";
 
 export const MainLayout: React.FC = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -18,6 +19,8 @@ export const MainLayout: React.FC = () => {
         return <NurseAgentPage />;
       case "lab-medications":
         return <LabMedicationsPage />;
+      case "profile":
+        return <ProfilePage />;
       default:
         return <DashboardPage />;
     }
