@@ -29,6 +29,8 @@ export const RealtimeHealthMetrics: React.FC<RealtimeHealthMetricsProps> = ({
 
   // Fetch real-time health data every 5 seconds
   useEffect(() => {
+    let hasInitialData = false;
+    
     const fetchHealthData = async () => {
       try {
         const response = await apiClient.getRealtimeHealthData();
@@ -36,25 +38,30 @@ export const RealtimeHealthMetrics: React.FC<RealtimeHealthMetricsProps> = ({
         setIsConnected(true);
         setLastUpdate(new Date());
         setIsLoading(false);
+        hasInitialData = true;
       } catch (error) {
         console.error("Failed to fetch health data:", error);
-        setIsConnected(false);
         setIsLoading(false);
-
-        // Mock data for demonstration when API is not available
-        setHealthData({
-          heart_rate: 72 + Math.floor(Math.random() * 20) - 10,
-          steps: 8500 + Math.floor(Math.random() * 2000),
-          calories_burned: 1850 + Math.floor(Math.random() * 500),
-          blood_pressure: {
-            systolic: 120 + Math.floor(Math.random() * 20),
-            diastolic: 80 + Math.floor(Math.random() * 10),
-          },
-          blood_oxygen: 95 + Math.floor(Math.random() * 5),
-          stress_level: Math.floor(Math.random() * 100),
-          temperature: 98.6 + (Math.random() * 2 - 1),
-          timestamp: new Date().toISOString(),
-        });
+        
+        // Keep trying to connect - only set as disconnected if no initial data
+        if (!hasInitialData) {
+          setIsConnected(false);
+          // Provide realistic demo data while trying to reconnect
+          setHealthData({
+            heart_rate: 72 + Math.floor(Math.random() * 16) - 8,
+            steps: 8500 + Math.floor(Math.random() * 1500),
+            calories_burned: 1850 + Math.floor(Math.random() * 300),
+            blood_pressure: {
+              systolic: 118 + Math.floor(Math.random() * 14),
+              diastolic: 78 + Math.floor(Math.random() * 8),
+            },
+            blood_oxygen: 97 + Math.floor(Math.random() * 3),
+            stress_level: 20 + Math.floor(Math.random() * 30), // More realistic stress levels
+            temperature: 98.2 + (Math.random() * 1.4), // Normal body temperature range
+            timestamp: new Date().toISOString(),
+          });
+          hasInitialData = true;
+        }
       }
     };
 
@@ -189,8 +196,8 @@ export const RealtimeHealthMetrics: React.FC<RealtimeHealthMetricsProps> = ({
                 <WifiOff className="w-4 h-4 text-red-500 mr-2" />
               )}
               <span className="text-sm text-gray-500">
-                {isConnected ? "Connected" : "Offline Mode"} •
-                {lastUpdate && ` Updated ${lastUpdate.toLocaleTimeString()}`}
+                {isConnected ? "Online Mode • Live Data" : "Demo Mode • Simulated Data"} 
+                {lastUpdate && ` • Updated ${lastUpdate.toLocaleTimeString()}`}
               </span>
             </div>
           </div>

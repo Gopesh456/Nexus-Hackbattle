@@ -46,6 +46,7 @@ export const FoodDiary: React.FC<FoodDiaryProps> = ({ onUpdateSummary }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodLog | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
     food_name: "",
@@ -68,7 +69,33 @@ export const FoodDiary: React.FC<FoodDiaryProps> = ({ onUpdateSummary }) => {
   const loadFoodLogs = async () => {
     try {
       const response = await apiClient.getNutritionHistory();
-      setFoodLogs(response.data || []);
+
+      // Transform API response to match FoodLog interface
+      const transformedLogs = (response.results || []).map(
+        (item: Record<string, unknown>) => ({
+          id: String(item.id),
+          food_name: String(item.food_name),
+          quantity: Number(item.quantity),
+          unit: String(item.unit || "g"),
+          meal_type:
+            (item.meal_type as "breakfast" | "lunch" | "dinner" | "snack") ||
+            "breakfast",
+          time: String(item.created_at),
+          nutrition: {
+            calories: Number(item.calories || 0),
+            protein: Number(item.protein || 0),
+            carbs: Number(item.carbohydrates || item.carbs || 0),
+            fat: Number(item.fat || 0),
+            fiber: Number(item.fiber || 0),
+            sugar: Number(item.sugar || 0),
+            sodium: Number(item.sodium || 0),
+            cholesterol: Number(item.cholesterol || 0),
+          },
+          created_at: String(item.created_at),
+        })
+      );
+
+      setFoodLogs(transformedLogs);
     } catch (error) {
       console.error("Failed to load food logs:", error);
     }
@@ -114,15 +141,14 @@ export const FoodDiary: React.FC<FoodDiaryProps> = ({ onUpdateSummary }) => {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.addFoodEntry(
+      // For now, we'll use a mock nutrition calculation for preview
+      // This provides immediate feedback without API calls
+      const mockNutrition = calculateMockNutrition(
         formData.food_name,
-        parseFloat(formData.quantity),
-        formData.unit,
-        formData.time,
-        selectedMeal
+        parseFloat(formData.quantity)
       );
 
-      setNutritionData(response.nutrition);
+      setNutritionData(mockNutrition);
       setShowNutrition(true);
     } catch (error) {
       console.error("Failed to fetch nutrition data:", error);
@@ -132,18 +158,119 @@ export const FoodDiary: React.FC<FoodDiaryProps> = ({ onUpdateSummary }) => {
     }
   };
 
-  const logFood = async () => {
-    if (!nutritionData) return;
+  // Mock nutrition calculation for preview (can be replaced with actual API call later)
+  const calculateMockNutrition = (
+    foodName: string,
+    quantity: number
+  ): NutritionDetails => {
+    // Basic nutrition estimates per 100g for common foods
+    const nutritionDatabase: Record<string, Partial<NutritionDetails>> = {
+      apple: {
+        calories: 52,
+        protein: 0.3,
+        carbs: 14,
+        fat: 0.2,
+        fiber: 2.4,
+        sugar: 10,
+      },
+      banana: {
+        calories: 89,
+        protein: 1.1,
+        carbs: 23,
+        fat: 0.3,
+        fiber: 2.6,
+        sugar: 12,
+      },
+      chicken: {
+        calories: 165,
+        protein: 31,
+        carbs: 0,
+        fat: 3.6,
+        fiber: 0,
+        sugar: 0,
+      },
+      rice: {
+        calories: 130,
+        protein: 2.7,
+        carbs: 28,
+        fat: 0.3,
+        fiber: 0.4,
+        sugar: 0.1,
+      },
+      bread: {
+        calories: 265,
+        protein: 9,
+        carbs: 49,
+        fat: 3.2,
+        fiber: 2.7,
+        sugar: 5,
+      },
+    };
 
+    // Find closest match or use default values
+    const foodKey = Object.keys(nutritionDatabase).find((key) =>
+      foodName.toLowerCase().includes(key)
+    );
+
+    const baseNutrition = foodKey
+      ? nutritionDatabase[foodKey]
+      : {
+          calories: 200,
+          protein: 5,
+          carbs: 20,
+          fat: 5,
+          fiber: 2,
+          sugar: 5,
+        };
+
+    // Scale nutrition based on quantity (assuming quantity is in grams)
+    const scaleFactor = quantity / 100;
+
+    return {
+      calories: Math.round((baseNutrition.calories || 0) * scaleFactor),
+      protein: Math.round((baseNutrition.protein || 0) * scaleFactor * 10) / 10,
+      carbs: Math.round((baseNutrition.carbs || 0) * scaleFactor * 10) / 10,
+      fat: Math.round((baseNutrition.fat || 0) * scaleFactor * 10) / 10,
+      fiber: Math.round((baseNutrition.fiber || 0) * scaleFactor * 10) / 10,
+      sugar: Math.round((baseNutrition.sugar || 0) * scaleFactor * 10) / 10,
+    };
+  };
+
+  const logFood = async () => {
+    if (!nutritionData || !formData.food_name || !formData.quantity) return;
+
+    setIsLoading(true);
     try {
+      // Actually save the food entry to the backend
+      await apiClient.addFoodEntry(
+        formData.food_name,
+        parseFloat(formData.quantity),
+        formData.unit,
+        selectedMeal,
+        formData.time
+      );
+
+      // Show success message
+      setSuccessMessage(`${formData.food_name} added to ${selectedMeal}!`);
+
+      // Reload the food logs to show the new entry
       await loadFoodLogs();
+
+      // Update the daily summary to reflect new nutrition totals
       onUpdateSummary();
+
+      // Reset the form and close dialogs
       resetForm();
       setShowAddForm(false);
       setShowNutrition(false);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Failed to log food:", error);
       alert("Failed to log food. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -231,6 +358,21 @@ export const FoodDiary: React.FC<FoodDiaryProps> = ({ onUpdateSummary }) => {
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6">
+      {/* Success Message */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-4 p-3 bg-green-100 border border-green-200 rounded-lg flex items-center"
+          >
+            <CheckCircle2 className="w-5 h-5 text-green-600 mr-2" />
+            <span className="text-green-800 font-medium">{successMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-2xl font-bold text-gray-900 flex items-center">
           <Utensils className="w-7 h-7 mr-3 text-[#76B3A8]" />

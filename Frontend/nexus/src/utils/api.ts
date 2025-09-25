@@ -113,26 +113,130 @@ class ApiClient {
   async addFoodEntry(
     foodName: string,
     quantity: number,
-    unit: string,
-    time: string,
-    mealType: string
+    unit: string = "g",
+    mealType: string = "breakfast",
+    time: string = new Date().toTimeString().slice(0, 5)
   ) {
+    const token = Cookies.get("token");
+
+    // Convert quantity to grams if not already in grams
+    let quantityInGrams = quantity;
+    const unitLower = unit.toLowerCase();
+
+    // Common unit conversions to grams
+    switch (unitLower) {
+      case "kg":
+      case "kilogram":
+      case "kilograms":
+        quantityInGrams = quantity * 1000;
+        break;
+      case "lb":
+      case "pound":
+      case "pounds":
+        quantityInGrams = quantity * 453.592;
+        break;
+      case "oz":
+      case "ounce":
+      case "ounces":
+        quantityInGrams = quantity * 28.3495;
+        break;
+      case "cup":
+      case "cups":
+        quantityInGrams = quantity * 240; // Approximate for liquid
+        break;
+      case "tbsp":
+      case "tablespoon":
+      case "tablespoons":
+        quantityInGrams = quantity * 15;
+        break;
+      case "tsp":
+      case "teaspoon":
+      case "teaspoons":
+        quantityInGrams = quantity * 5;
+        break;
+      case "g":
+      case "gram":
+      case "grams":
+      default:
+        quantityInGrams = quantity;
+        break;
+    }
+
     return this.post("nutrition/", {
       food_name: foodName,
-      quantity: quantity,
-      unit: unit,
-      time: time,
+      quantity: Math.round(quantityInGrams), // Ensure integer grams
       meal_type: mealType,
+      time: time,
+      token: token,
     });
   }
 
   async getNutritionHistory() {
-    return this.post("nutrition/history/", {});
+    const token = Cookies.get("token");
+    return this.post("nutrition/", { token });
   }
 
   async searchFoodUSDA(query: string) {
     return this.post("nutrition/search/", {
       query: query,
+    });
+  }
+
+  // Get nutrition info without saving (for preview)
+  async getNutritionInfo(
+    foodName: string,
+    quantity: number,
+    unit: string = "g"
+  ) {
+    const token = Cookies.get("token");
+
+    // Convert quantity to grams if not already in grams
+    let quantityInGrams = quantity;
+    const unitLower = unit.toLowerCase();
+
+    // Common unit conversions to grams
+    switch (unitLower) {
+      case "kg":
+      case "kilogram":
+      case "kilograms":
+        quantityInGrams = quantity * 1000;
+        break;
+      case "lb":
+      case "pound":
+      case "pounds":
+        quantityInGrams = quantity * 453.592;
+        break;
+      case "oz":
+      case "ounce":
+      case "ounces":
+        quantityInGrams = quantity * 28.3495;
+        break;
+      case "cup":
+      case "cups":
+        quantityInGrams = quantity * 240;
+        break;
+      case "tbsp":
+      case "tablespoon":
+      case "tablespoons":
+        quantityInGrams = quantity * 15;
+        break;
+      case "tsp":
+      case "teaspoon":
+      case "teaspoons":
+        quantityInGrams = quantity * 5;
+        break;
+      case "g":
+      case "gram":
+      case "grams":
+      default:
+        quantityInGrams = quantity;
+        break;
+    }
+
+    return this.post("nutrition/preview/", {
+      food_name: foodName,
+      quantity: Math.round(quantityInGrams),
+      token: token,
     });
   }
 
@@ -162,7 +266,36 @@ class ApiClient {
 
   // Dashboard specific endpoints
   async getDailySummary() {
-    return this.post("dashboard/daily-summary/", {});
+    try {
+      // Get nutrition goals
+      const goalsResponse = await this.getNutritionGoals();
+
+      // Get today's consumed nutrition
+      const nutritionResponse = await this.getNutritionHistory();
+
+      // Combine the data
+      return {
+        data: {
+          goal_calories: goalsResponse.calories || 2200,
+          goal_protein: goalsResponse.protein || 110,
+          goal_carbs: goalsResponse.carbs || 275,
+          goal_fat: goalsResponse.fat || 73,
+          total_calories: nutritionResponse.total_nutrition?.calories || 0,
+          total_protein: nutritionResponse.total_nutrition?.protein || 0,
+          total_carbs: nutritionResponse.total_nutrition?.carbs || 0,
+          total_fat: nutritionResponse.total_nutrition?.fat || 0,
+          meals: {
+            breakfast: { calories: 0, items: 0 },
+            lunch: { calories: 0, items: 0 },
+            dinner: { calories: 0, items: 0 },
+            snack: { calories: 0, items: 0 },
+          },
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching daily summary:", error);
+      throw error;
+    }
   }
 
   async getRealtimeHealthData() {
@@ -175,15 +308,18 @@ class ApiClient {
 
   // User Goals POST endpoints
   async setNutritionGoals(goals: Record<string, unknown>) {
-    return this.post("goals/", goals);
+    const token = Cookies.get("token");
+    return this.post("nutrition/goals/", { ...goals, token });
   }
 
   async getNutritionGoals() {
-    return this.post("goals/get/", {});
+    const token = Cookies.get("token");
+    return this.post("nutrition/goals/", { token });
   }
 
   async updateNutritionGoals(goals: Record<string, unknown>) {
-    return this.post("goals/update/", goals);
+    const token = Cookies.get("token");
+    return this.post("nutrition/goals/", { ...goals, token });
   }
 
   // Basic Info POST endpoints (already have storeBasicInfo)

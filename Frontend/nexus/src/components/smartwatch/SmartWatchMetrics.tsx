@@ -51,9 +51,187 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mockDataIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const stepsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Base realistic values for mock data
+  const [baseMetrics] = useState({
+    heartRate: 72 + Math.floor(Math.random() * 16), // 72-88 BPM (normal resting)
+    stepsToday: Math.floor(Math.random() * 3000) + 2000, // Start with 2000-5000 steps
+    caloriesBurned: Math.floor(Math.random() * 200) + 150, // Start with 150-350 calories
+    bloodPressure: {
+      systolic: 118 + Math.floor(Math.random() * 14), // 118-132 (normal range)
+      diastolic: 76 + Math.floor(Math.random() * 8), // 76-84 (normal range)
+    },
+    bloodOxygenLevel: 97 + Math.floor(Math.random() * 3), // 97-100% (normal)
+    stressLevel: 2 + Math.floor(Math.random() * 3), // 2-5 (low to moderate)
+    bodyTemperature: 98.1 + Math.random() * 1.2, // 98.1-99.3°F (normal range)
+  });
 
   const WS_URL = "wss://jarrod-senescent-beatris.ngrok-free.dev";
   const HTTP_URL = "https://jarrod-senescent-beatris.ngrok-free.dev";
+
+  // Generate realistic health data for demo purposes
+  const generateRealisticHealthData = useCallback(() => {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+
+    // Heart rate varies naturally (60-100 BPM, higher during day)
+    const timeMultiplier = currentHour >= 6 && currentHour <= 22 ? 1.1 : 0.9;
+    const heartRateVariation = (Math.random() - 0.5) * 6; // ±3 BPM variation
+    const newHeartRate = Math.round(
+      baseMetrics.heartRate * timeMultiplier + heartRateVariation
+    );
+
+    // Blood pressure stays relatively stable
+    const bpVariation = (Math.random() - 0.5) * 4; // ±2 mmHg variation
+    const newSystolic = Math.round(
+      baseMetrics.bloodPressure.systolic + bpVariation
+    );
+    const newDiastolic = Math.round(
+      baseMetrics.bloodPressure.diastolic + bpVariation * 0.6
+    );
+
+    // Blood oxygen stays very stable (96-100%)
+    const oxygenVariation = (Math.random() - 0.5) * 2; // ±1% variation
+    const newBloodOxygenLevel = Math.round(
+      Math.max(
+        96,
+        Math.min(100, baseMetrics.bloodOxygenLevel + oxygenVariation)
+      )
+    );
+
+    // Stress level varies throughout the day (lower at night)
+    const isNightTime = currentHour >= 22 || currentHour <= 6;
+    const stressMultiplier = isNightTime ? 0.5 : 1.0;
+    const stressVariation = (Math.random() - 0.5) * 2; // ±1 level variation
+    const newStressLevel = Math.round(
+      Math.max(
+        1,
+        Math.min(
+          10,
+          baseMetrics.stressLevel * stressMultiplier + stressVariation
+        )
+      )
+    );
+
+    // Body temperature stays very stable
+    const tempVariation = (Math.random() - 0.5) * 0.4; // ±0.2°F variation
+    const newBodyTemperature =
+      Math.round((baseMetrics.bodyTemperature + tempVariation) * 10) / 10;
+
+    return {
+      heartRate: Math.max(50, Math.min(120, newHeartRate)),
+      bloodPressure: {
+        systolic: Math.max(90, Math.min(140, newSystolic)),
+        diastolic: Math.max(60, Math.min(90, newDiastolic)),
+      },
+      bloodOxygenLevel: newBloodOxygenLevel,
+      stressLevel: newStressLevel,
+      bodyTemperature: Math.max(97.0, Math.min(100.0, newBodyTemperature)),
+    };
+  }, [baseMetrics]);
+
+  // Update steps more realistically (every minute, small increments)
+  const updateStepsRealistic = useCallback(() => {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+
+    // People walk more during active hours (7 AM - 10 PM)
+    const isActiveHour = currentHour >= 7 && currentHour <= 22;
+    const baseStepIncrement = isActiveHour
+      ? Math.floor(Math.random() * 25) + 5 // 5-30 steps per minute during active hours
+      : Math.floor(Math.random() * 5); // 0-5 steps per minute during inactive hours
+
+    setMetrics((prev) => ({
+      ...prev,
+      stepsToday: prev.stepsToday + baseStepIncrement,
+    }));
+  }, []);
+
+  // Update calories burned more realistically (small increments based on activity)
+  const updateCaloriesRealistic = useCallback(() => {
+    setMetrics((prev) => {
+      // Base metabolic rate: ~1.2-1.5 calories per minute
+      const baseBurnRate = 1.3;
+
+      // Activity multiplier based on step increases
+      const stepIncreaseLastMinute =
+        prev.stepsToday > baseMetrics.stepsToday
+          ? Math.min((prev.stepsToday - baseMetrics.stepsToday) / 1000, 2)
+          : 0;
+
+      const activityMultiplier = 1 + stepIncreaseLastMinute * 0.5;
+      const calorieIncrement = Math.round(baseBurnRate * activityMultiplier);
+
+      return {
+        ...prev,
+        caloriesBurned: prev.caloriesBurned + calorieIncrement,
+      };
+    });
+  }, [baseMetrics.stepsToday]);
+
+  const startMockDataGeneration = useCallback(() => {
+    console.log("Starting realistic mock data generation...");
+
+    // Initialize with base metrics if not already set
+    if (metrics.heartRate === 0) {
+      setMetrics({
+        heartRate: baseMetrics.heartRate,
+        stepsToday: baseMetrics.stepsToday,
+        caloriesBurned: baseMetrics.caloriesBurned,
+        bloodPressure: baseMetrics.bloodPressure,
+        bloodOxygenLevel: baseMetrics.bloodOxygenLevel,
+        stressLevel: baseMetrics.stressLevel,
+        bodyTemperature: baseMetrics.bodyTemperature,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Update most metrics every 5 seconds (except calories and steps)
+    mockDataIntervalRef.current = setInterval(() => {
+      const newHealthData = generateRealisticHealthData();
+
+      setMetrics((prev) => ({
+        ...prev,
+        heartRate: newHealthData.heartRate,
+        bloodPressure: newHealthData.bloodPressure,
+        bloodOxygenLevel: newHealthData.bloodOxygenLevel,
+        stressLevel: newHealthData.stressLevel,
+        bodyTemperature: newHealthData.bodyTemperature,
+        timestamp: new Date().toISOString(),
+      }));
+
+      setLastUpdate(new Date());
+    }, 5000); // Every 5 seconds for most metrics
+
+    // Update steps every minute
+    stepsIntervalRef.current = setInterval(() => {
+      updateStepsRealistic();
+      updateCaloriesRealistic(); // Update calories when steps update
+    }, 60000); // Every minute
+
+    setIsConnected(true);
+    setLastUpdate(new Date());
+  }, [
+    baseMetrics,
+    generateRealisticHealthData,
+    updateStepsRealistic,
+    updateCaloriesRealistic,
+    metrics.heartRate,
+  ]);
+
+  const stopMockDataGeneration = useCallback(() => {
+    if (mockDataIntervalRef.current) {
+      clearInterval(mockDataIntervalRef.current);
+      mockDataIntervalRef.current = null;
+    }
+
+    if (stepsIntervalRef.current) {
+      clearInterval(stepsIntervalRef.current);
+      stepsIntervalRef.current = null;
+    }
+  }, []);
 
   const tryHttpPolling = useCallback(async () => {
     console.log("Attempting HTTP polling to:", HTTP_URL);
@@ -196,12 +374,18 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({
       setIsConnecting(false);
       setIsConnected(false);
 
-      // Retry HTTP polling after 5 seconds
+      // Start mock data generation as fallback
+      console.log("Starting realistic mock data as fallback...");
+      setError("Using simulated data for demonstration");
+      startMockDataGeneration();
+
+      // Still retry HTTP polling after 30 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
+        stopMockDataGeneration();
         tryHttpPolling();
-      }, 5000);
+      }, 30000);
     }
-  }, [HTTP_URL]);
+  }, [HTTP_URL, startMockDataGeneration, stopMockDataGeneration]);
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -336,10 +520,13 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({
       wsRef.current = null;
     }
 
+    // Stop mock data generation
+    stopMockDataGeneration();
+
     setIsConnected(false);
     setIsConnecting(false);
     setError(null);
-  }, []);
+  }, [stopMockDataGeneration]);
 
   useEffect(() => {
     connectWebSocket();
@@ -453,6 +640,14 @@ export const SmartWatchMetrics: React.FC<SmartWatchMetricsProps> = ({
                 className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {isConnected ? "Disconnect" : "HTTP Polling"}
+              </button>
+
+              <button
+                onClick={isConnected ? disconnect : startMockDataGeneration}
+                disabled={isConnecting}
+                className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {isConnected ? "Disconnect" : "Demo Mode"}
               </button>
             </div>
           </div>
