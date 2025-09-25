@@ -1,0 +1,40 @@
+# Image Processing Dependencies for Lab Report Analysis
+# Install these packages to enable image processing capabilities
+
+# Core image processing
+opencv-python==4.8.1.78
+Pillow==10.0.1
+
+# OCR (Optical Character Recognition)
+pytesseract==0.3.10
+
+# Additional image processing utilities
+numpy==1.24.3
+scipy==1.11.3
+
+# Enhanced image preprocessing
+scikit-image==0.21.0
+matplotlib==3.7.2
+
+# PDF processing (for lab reports in PDF format)
+PyPDF2==3.0.1
+pdf2image==1.16.3
+
+# Machine learning for improved text recognition
+scikit-learn==1.3.0
+
+# Installation Instructions:
+# 1. Install Python packages:
+#    pip install -r lab_processing_requirements.txt
+#
+# 2. Install Tesseract OCR engine:
+#    Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
+#    macOS: brew install tesseract
+#    Linux: sudo apt-get install tesseract-ocr
+#
+# 3. For better medical text recognition, install language packs:
+#    Windows: Select additional languages during Tesseract installation
+#    Linux: sudo apt-get install tesseract-ocr-eng tesseract-ocr-script-latn
+#
+# 4. Verify installation:
+#    python -c "import cv2, pytesseract; print('All dependencies installed successfully')"

@@ -1,0 +1,34 @@
+# Core CrewAI dependencies
+<<<<<<< HEAD
+crewai>=0.28.8
+crewai-tools
+=======
+crewai[tools]>=0.193.0,<1.0.0
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
+
+# LLM Integration
+langchain-groq
+groq>=0.4.0
+
+# Image Processing for Lab Reports
+opencv-python>=4.8.0
+pillow>=10.0.0
+pytesseract>=0.3.10
+pdf2image>=1.16.3
+
+# API and Database Integration
+requests>=2.31.0
+django>=4.2.0
+
+
+# Additional dependencies for development and functionality
+pydantic>=2.0.0
+python-dotenv
+<<<<<<< HEAD
+pathlib
+=======
+
+# Browser automation
+browser-use
+requests
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
