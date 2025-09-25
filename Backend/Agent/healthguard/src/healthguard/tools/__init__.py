@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from .custom_tool import search_tool
 from .database_integration import database_connector
 from .lab_report_processor import lab_report_image_processor
@@ -12,4 +13,14 @@ __all__ = [
     'integrated_lab_processor',
     'groq_vision_processor',
     'hybrid_groq_lab_processor'
+=======
+from .custom_tool import (
+    BrowserTool,
+    WebSearchTool
+)
+
+__all__ = [
+    "BrowserTool",
+    "WebSearchTool"
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
 ]
