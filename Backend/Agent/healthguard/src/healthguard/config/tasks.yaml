@@ -15,129 +15,270 @@ nurse_task:
       "user_age": "integer",
       "user_symptoms": ["string"],
       "assessment_urgency_level": "string",
-      "nearest_hospital": {
-        "hospital_name": "string",
-        "hospital_contact": "string",
-        "hospital_address": "string"
-      },
-      "appointment_details": {
-        "appointment_status": "string",
-        "appointment_department": "string",
-        "appointment_date": "string (dd-mm-yyyy)",
-        "appointment_time": "string (hh:mm AM/PM)"
-      },
-      "confirmation_message": "Your appointment has been successfully booked. Please check the details above."
+      "hospital_name": "string",
+      "hospital_address": "string",
+      "hospital_distance_km": "float",
+      "appointment_status": "string",
+      "appointment_doctor": "string",
+      "appointment_department": "string",
+      "appointment_date": "string (yyyy-mm-dd)",
+      "appointment_time": "string (hh:mm AM/PM)",
+      "confirmation_message": "Your appointment with {doctor} has been successfully booked for {date} at {time}."
     }
 
 med_task:
   description: >
-    You are a virtual medical assistant specialized in helping patients manage their medicines. 
+     You are a virtual medical assistant specialized in helping patients manage their medicines. 
 
-    Your responsibilities are:
+     Your responsibilities are:
 
-    1. Collect all necessary medicine details from the user:
-        - Name of the medicine
-        - Dosage per intake (e.g., 1 tablet, 5 ml)
-        - Frequency of intake (e.g., 2 times per day, every 8 hours)
-        - Time(s) of day for intake (e.g., 8:00 AM, 8:00 PM)
-        - Total number of pills/tablets/syrup quantity available
-        - Special instructions (e.g., before food, after food)
+      1. Collect all necessary medicine details from the user:
+         - Name of the medicine
+         - Dosage per intake (e.g., 1 tablet, 5 ml)
+         - Frequency of intake (e.g., 2 times per day, every 8 hours)
+         - Time(s) of day for intake (e.g., 8:00 AM, 8:00 PM)
+         - Total number of pills/tablets/syrup quantity available
+         - Special instructions (e.g., before food, after food)
 
-    2. Schedule **reminders** for the user at the correct times based on the frequency and timing of the medicine intake:
-        - Ensure reminders are clear and include dosage and any special instructions
-        - Confirm with the user that they have received and understood the reminders
+      2. Schedule **reminders** for the user at the correct times based on the frequency and timing of the medicine intake:
+         - Ensure reminders are clear and include dosage and any special instructions
+         - Confirm with the user that they have received and understood the reminders
 
-    3. Calculate the **restock date** for the medicine:
-        - Determine how long the current stock will last based on frequency and quantity
-        - Suggest the exact date when the user needs to buy more medicine
+      3. Calculate the **restock date** for the medicine:
+         - Determine how long the current stock will last based on frequency and quantity
+         - Suggest the exact date when the user needs to buy more medicine
 
-    4.Document the medicine details, reminder schedule, and restock date in a clear, structured JSON format:
-
-  expected_output: >
-    JSON object with the following structure:
-    {
-      "medicine_name": "string",
-      "medicine_dosage": "string",
-      "medicine_frequency": "string",
-      "medical_condition" : "string",
-      "medicine_timing": ["string"],
-
-
-      "restock_date": "string (yyyy-mm-dd)",
-      "reminder_time": "string"
-    }
-
-guardian_task:
-  description: >
-    You are a vigilant health guardian. Your task is to monitor the user's health data continuously and identify any anomalies or potential health risks. 
-
-    Your responsibilities include:
-
-    1. Collecting and analyzing health data from various sources such as wearable devices, health apps, and manual inputs.
-
-    2. Identifying patterns and trends in the data that may indicate potential health issues.
-
-    3. Alerting the user promptly if any anomalies or risks are detected, providing clear and actionable advice on what steps to take next.
-
-    4. Documenting all findings, alerts, and recommendations in a structured JSON format for easy reference.
+      4.Document the medicine details, reminder schedule, and restock date in a clear, structured JSON format:
 
   expected_output: >
-    JSON object with the following structure:
-    {
-      "health_key_metrics": "object with metric_name: value pairs",
-      "health_patterns_identified": ["string"],
-      "alert_date": "string (yyyy-mm-dd)",
-      "alert_time": "string (hh:mm AM/PM)",
-      "alert_issue_detected": "string",
-      "alert_advice": "string",
-      "recommendation_date": "string (yyyy-mm-dd)",
-      "recommendation_text": "string"
-    }
+      JSON object with the following structure:
+      {
+        "medicine_name": "string",
+        "medicine_ dosage": "string",
+        "medicine_frequency": "string",
+        "medicine_timing": ["string"],
+        "medicine_quantity_available": "integer",
+        "medicine_special_instructions": "string",
+        "reminder_medicine": "string",
+        "reminder_time": "string",
+        "reminder_dosage": "string",
+        "restock_date": "string (yyyy-mm-dd)",
+        "message": "Your stock of {medicine} will run out on {restock_date}. Please restock in advance."
+      }
 
-labs_task:
-  description: >
-    You are a diligent lab results manager. Your task is to handle and interpret lab test results for users, ensuring they understand their health status and any necessary follow-up actions.
+  guardian_task:
+    description: >
+      You are a vigilant health guardian. Your task is to monitor the user's health data continuously and identify any anomalies or potential health risks. 
 
-    Your responsibilities include:
+      Your responsibilities include:
 
-    1. Collecting lab test results from various medical laboratories.
+      1. Collecting and analyzing health data from various sources such as wearable devices, health apps, and manual inputs.
 
-    2. Interpreting the results accurately, identifying the specific tests performed and any abnormalities or areas of concern.
+      2. Identifying patterns and trends in the data that may indicate potential health issues.
 
-    3. Extracting all relevant parameters and their corresponding values from the report for reliable storage, retrieval, and further medical use.
+      3. Alerting the user promptly if any anomalies or risks are detected, providing clear and actionable advice on what steps to take next.
 
-    4.Communicating the results to the user in a clear and understandable manner, avoiding medical jargon.
+      4. Documenting all findings, alerts, and recommendations in a structured JSON format for easy reference.
 
-    6. Providing recommendations for follow-up actions if necessary, such as consulting a specialist or scheduling further tests.
+    expected_output: >
+      JSON object with the following structure:
+      {
+        "health_data_sources": ["string"],
+        "health_key_metrics": "object with metric_name: value pairs",
+        "health_patterns_identified": ["string"],
+        "alert_date": "string (yyyy-mm-dd)",
+        "alert_time": "string (hh:mm AM/PM)",
+        "alert_issue_detected": "string",
+        "alert_advice": "string",
+        "recommendation_date": "string (yyyy-mm-dd)",
+        "recommendation_text": "string"
+      }
 
-    7. Documenting all lab results, interpretations, and recommendations in a structured JSON format for easy reference.
+  labs_task:
+    description: >
+      You are a specialized Lab Report Image Processor powered by Groq's vision-capable LLM. You process lab report images stored in the images folder by converting them to base64 and sending them to Groq for advanced AI analysis.
 
-  expected_output: >
-    JSON object with the following structure:
-    {
-      "lab_test_name": "string",
-      "lab_date_conducted": "string (yyyy-mm-dd)",
-      "lab_results": "object with parameter: value pairs",
-      "lab_normal_ranges": "object with parameter: normal_range pairs",
-      "interpretation_abnormalities": ["string"],
-      "recommendation_date": "string (yyyy-mm-dd)",
-      "recommendation_action": "string",
-      "message": "Your lab results for {lab_test_name} conducted on {lab_date_conducted} have been reviewed. Please see the interpretation and recommendations above."
-    }
+      Your automated workflow:
+
+      1. **Image Loading and Conversion**:
+         - Automatically scan the images folder for lab report images
+         - Support multiple formats: JPEG, PNG, TIFF, BMP, PDF
+         - Convert each image to base64 encoding for LLM processing
+         - Handle image preprocessing and optimization for better analysis
+         - Manage batch processing of multiple lab reports
+
+      2. **Groq LLM Integration**:
+         - Send base64-encoded images to Groq's vision-capable models (llava-v1.5-7b-4096-preview or llama-3.2-90b-vision-preview)
+         - Use specialized medical prompts for accurate lab report analysis
+         - Leverage Groq's fast inference for real-time processing
+         - Handle API authentication and error management
+         - Optimize prompts for maximum data extraction accuracy
+
+      3. **Comprehensive Data Extraction via AI Vision**:
+         - **Patient Information**: Name, age, gender, patient ID, contact details, medical record number
+         - **Laboratory Details**: Lab name, address, contact information, report ID, accreditation info
+         - **Test Metadata**: Report date, collection date, received date, report type, specimen type
+         - **ALL Lab Parameters**: Extract every single test parameter with its value, unit, and status
+         - **Reference Ranges**: Normal ranges, critical values, and age/gender-specific ranges
+         - **Doctor Information**: Ordering physician, reviewing pathologist, contact information
+         - **Quality Indicators**: Sample quality, collection method, processing notes
+
+      4. **Advanced Parameter Recognition**:
+         - **Complete Blood Count (CBC)**: Hemoglobin, Hematocrit, RBC, WBC, Platelets, MCV, MCH, MCHC, RDW, Neutrophils, Lymphocytes, Monocytes, Eosinophils, Basophils
+         - **Comprehensive Metabolic Panel**: Glucose, Creatinine, BUN, Sodium, Potassium, Chloride, CO2, Calcium, Total Protein, Albumin, Globulin
+         - **Lipid Profile**: Total Cholesterol, HDL, LDL, Triglycerides, VLDL, Non-HDL Cholesterol, Cholesterol Ratios
+         - **Liver Function Tests**: ALT, AST, Alkaline Phosphatase, Total Bilirubin, Direct Bilirubin, Indirect Bilirubin, GGT, LDH
+         - **Thyroid Function**: TSH, Free T4, Free T3, Total T4, Total T3, Reverse T3, Thyroglobulin, Anti-TPO
+         - **Cardiac Markers**: Troponin I/T, CK-MB, BNP, NT-proBNP, D-Dimer, Homocysteine
+         - **Inflammatory Markers**: ESR, CRP, Procalcitonin, Ferritin, Complement C3/C4
+         - **Diabetes Markers**: HbA1c, Fasting Glucose, Random Glucose, Insulin, C-Peptide
+         - **Vitamins and Minerals**: Vitamin D, B12, B6, Folate, Iron, TIBC, Transferrin Saturation, Magnesium, Phosphorus, Zinc
+         - **Hormones**: Testosterone, Estrogen, Progesterone, Cortisol, DHEA-S, FSH, LH, Prolactin
+         - **Tumor Markers**: PSA, CEA, CA-125, CA 19-9, AFP, Beta-HCG
+         - **Coagulation Studies**: PT, PTT, INR, Fibrinogen, Platelet Function
+         - **Urinalysis**: Specific Gravity, pH, Protein, Glucose, Ketones, Blood, Nitrites, Leukocyte Esterase, Microscopy
+         - **Immunology**: Immunoglobulins, Autoantibodies, Allergy Panels
+         - **Infectious Disease**: Hepatitis Panel, HIV, Syphilis, Culture Results
+         - **ANY OTHER PARAMETERS** visible in the report
+
+      5. **AI-Powered Medical Analysis**:
+         - Use Groq's advanced reasoning to interpret lab values
+         - Cross-reference multiple parameters for comprehensive analysis
+         - Identify patterns and correlations between different test results
+         - Generate clinical insights based on latest medical knowledge
+         - Provide severity assessment and risk stratification
+
+      4. **Medical Analysis**: Analyze all extracted values:
+         - Compare each parameter against its normal range
+         - Identify abnormal, borderline, and critical values
+         - Determine overall health status and severity
+         - Generate clinical interpretations in simple language
+
+      5. **Quality Assurance**: Ensure data accuracy:
+         - Cross-verify extracted values with visible text
+         - Flag any uncertain or unclear readings
+         - Provide confidence scores for extraction accuracy
+         - Include raw extracted text for verification
+
+    expected_output: >
+      Complete JSON object from Groq LLM analysis containing ALL extracted data:
+      {
+        "processing_info": {
+          "image_source": "string - Path to processed image from images folder",
+          "processing_method": "Hybrid OCR + Groq Text Analysis",
+          "groq_model": "meta-llama/llama-4-scout-17b-16e-instruct",
+          "ocr_text_length": "integer - Length of extracted text characters",
+          "processing_time": "float - Time taken for complete analysis in seconds",
+          "api_response_tokens": "integer - Number of tokens used in Groq analysis"
+        },
+        "lab_test_name": "string - Full name of the lab test/panel identified by Groq",
+        "lab_date_conducted": "string (yyyy-mm-dd) - Date when samples were collected",
+        "report_date": "string (yyyy-mm-dd) - Date when report was generated", 
+        "patient_name": "string - Full patient name extracted by vision AI",
+        "patient_age": "integer - Patient age in years",
+        "patient_gender": "string - Male/Female/Other",
+        "patient_id": "string - Patient identification number",
+        "medical_record_number": "string - Hospital MRN if available",
+        "lab_name": "string - Name of the laboratory",
+        "lab_address": "string - Complete laboratory address",
+        "lab_phone": "string - Laboratory contact number",
+        "doctor_name": "string - Ordering physician name",
+        "doctor_npi": "string - Physician NPI number if available",
+        "report_id": "string - Lab report reference number",
+        "specimen_type": "string - Type of specimen (blood, urine, etc.)",
+        "collection_time": "string - Time of specimen collection",
+        "lab_results": {
+          "parameter_name_1": {
+            "value": "numeric_value_extracted_by_ai",
+            "unit": "measurement_unit",
+            "status": "normal/abnormal/critical",
+            "flag": "H/L/Critical if abnormal",
+            "reference_range": "normal_range_for_this_parameter"
+          },
+          "parameter_name_2": {
+            "value": "numeric_value_extracted_by_ai",
+            "unit": "measurement_unit", 
+            "status": "normal/abnormal/critical",
+            "flag": "H/L/Critical if abnormal",
+            "reference_range": "normal_range_for_this_parameter"
+          }
+        },
+        "abnormal_values": [
+          {
+            "parameter": "parameter_name",
+            "value": "current_value",
+            "normal_range": "expected_range",
+            "severity": "abnormal/critical/borderline",
+            "clinical_significance": "AI-generated clinical explanation",
+            "trend": "increasing/decreasing/stable if historical data available"
+          }
+        ],
+        "critical_values": [
+          {
+            "parameter": "parameter_name",
+            "value": "current_value", 
+            "normal_range": "expected_range",
+            "immediate_action": "recommended_action"
+          }
+        ],
+        "groq_ai_insights": {
+          "clinical_summary": "string - AI-generated comprehensive summary of lab findings",
+          "risk_assessment": "string - AI assessment of health risks and implications",
+          "differential_diagnosis": ["condition_1", "condition_2"],
+          "follow_up_recommendations": [
+            "ai_recommendation_1",
+            "ai_recommendation_2"
+          ],
+          "lifestyle_suggestions": [
+            "lifestyle_advice_1",
+            "lifestyle_advice_2"
+          ]
+        },
+        "interpretation_summary": "string - Overall health assessment enhanced by Groq AI",
+        "clinical_recommendations": [
+          "ai_enhanced_recommendation_1",
+          "ai_enhanced_recommendation_2", 
+          "ai_enhanced_recommendation_3"
+        ],
+        "follow_up_required": "boolean - Whether follow-up is needed based on AI analysis",
+        "urgency_level": "string - low/medium/high/critical determined by AI",
+        "parameters_extracted": "integer - Total number of parameters found by Groq vision",
+        "data_quality_metrics": {
+          "extraction_confidence": "float - Overall confidence score (0.0-1.0)",
+          "image_clarity": "float - Image quality assessment (0.0-1.0)", 
+          "text_readability": "float - OCR text clarity (0.0-1.0)",
+          "completeness": "float - Data completeness percentage"
+        },
+        "groq_processing_details": {
+          "model_used": "meta-llama/llama-4-scout-17b-16e-instruct",
+          "tokens_consumed": "integer - Total tokens used in text analysis",
+          "response_time": "float - API response time in seconds",
+          "processing_approach": "Hybrid OCR + LLM Text Analysis",
+          "api_version": "openai/v1"
+        },
+        "raw_extracted_text": "string - Complete text extracted by Groq vision AI",
+        "processing_timestamp": "string (ISO datetime)",
+        "processing_notes": [
+          "groq_processing_observation_1",
+          "groq_processing_observation_2"
+        ],
+        "groq_raw_response": "string - Complete raw response from Groq API for debugging",
+        "message": "Lab report processed successfully using Groq AI vision. Extracted {parameters_extracted} parameters with {extraction_confidence}% confidence using {model_used}."
+      }
 
 voice_task:
   description: >
-    You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
+        You are a friendly voice assistant. Your task is to interact with users through voice commands, providing them with information and assistance in a conversational manner.
 
-    Your responsibilities include:
+        Your responsibilities include:
 
-    1. Understanding and processing voice commands from users accurately.
+        1. Understanding and processing voice commands from users accurately.
 
-    2. Providing clear and concise responses to user queries, ensuring the information is easy to understand.
+        2. Providing clear and concise responses to user queries, ensuring the information is easy to understand.
 
-    3. Assisting users with various tasks such as setting reminders, providing health tips, or answering health-related questions.
+        3. Assisting users with various tasks such as setting reminders, providing health tips, or answering health-related questions.
 
-    4. Documenting all interactions and responses in a structured JSON format for easy reference.
+        4. Documenting all interactions and responses in a structured JSON format for easy reference.
 
   expected_output: >
     JSON object with the following structure:
@@ -148,4 +289,53 @@ voice_task:
       "assistance_details": "string",
       "interaction_summary": "string"
     }
+
+food_task:
+  description: >
+    📁 Latest Results: hybrid_lab_analysis_20250925_142426.json
+  expected_output: >
+    JSON object with the following structure:
+    {
+      "date": "string (yyyy-mm-dd)",
+      "breakfast_food_items": ["string"],
+      "breakfast_total_calories": "integer",
+      "breakfast_carbohydrates_g": "float",
+      "breakfast_protein_g": "float",
+      "breakfast_fat_g": "float",
+      "lunch_food_items": ["string"],
+      "lunch_total_calories": "integer",
+      "lunch_carbohydrates_g": "float",
+      "lunch_protein_g": "float",
+      "lunch_fat_g": "float",
+      "dinner_food_items": ["string"],
+      "dinner_total_calories": "integer",
+      "dinner_carbohydrates_g": "float",
+      "dinner_protein_g": "float",
+      "dinner_fat_g": "float",
+      "snacks_food_items": ["string"],
+      "snacks_total_calories": "integer",
+      "snacks_carbohydrates_g": "float",
+      "snacks_protein_g": "float",
+      "snacks_fat_g": "float",
+      "daily_total_calories": "integer",
+      "daily_total_carbohydrates_g": "float",
+      "daily_total_protein_g": "float",
+      "daily_total_fat_g": "float",
+      "daily_protein_goal_g": "float",
+      "protein_intake_g": "float",
+      "goal_achieved_percentage": "float"
+    }
+
+# Missing tasks referenced in crew.py
+research_task:
+  description: >
+    Research and analyze health-related topics to provide comprehensive information.
+  expected_output: >
+    A comprehensive research report with key findings and recommendations.
+
+reporting_task:
+  description: >
+    Generate detailed reports based on health data analysis and research findings.
+  expected_output: >
+    A structured markdown report summarizing all health analysis results.
 

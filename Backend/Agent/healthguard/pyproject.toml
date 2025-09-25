@@ -5,7 +5,16 @@ description = "HealthGuard using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.11,<3.14"
 dependencies = [
+<<<<<<< HEAD
+    "crewai>=0.193.0,<1.0.0",
+    "python-dotenv",
+    "pydantic>=2.0.0", 
+    "langchain-groq",
+    "pillow>=10.0.0",
+    "requests>=2.31.0",
+=======
     "crewai[tools]>=0.193.0,<1.0.0","python-dotenv","pydantic>=2.0.0","langchain-groq","browser-use>=0.5.0","requests"
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
 ]
 
 [project.scripts]

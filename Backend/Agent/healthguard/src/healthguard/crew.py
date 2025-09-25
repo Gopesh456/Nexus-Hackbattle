@@ -29,8 +29,27 @@ class Healthguard():
     def nurse_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['nurse_agent'], 
+<<<<<<< HEAD
+            llm=ChatGroq(model="groq/llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY"))
+
+        )
+
+    @agent
+    def labs_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['labs_agent'], # type: ignore[index]
+            llm=ChatGroq(model="groq/llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY")),
+            verbose=True
+        )
+
+    @agent
+    def reporting_analyst(self) -> Agent:
+        return Agent(
+            config=self.agents_config['reporting_analyst'], # type: ignore[index]
+=======
             llm=self.groq_llm,
             tools=[BrowserTool(), WebSearchTool(), HospitalSearchTool()],
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
             verbose=True
         )
 
@@ -70,7 +89,17 @@ class Healthguard():
         )
 
     @task
+<<<<<<< HEAD
+    def labs_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['labs_task'], # type: ignore[index]
+        )
+
+    @task
+    def reporting_task(self) -> Task:
+=======
     def nurse_task(self) -> Task:
+>>>>>>> ba10145edb38eff8c258de858a943f3ad6a0aee5
         return Task(
             config=self.tasks_config['nurse_task'],
             agent=self.nurse_agent()
