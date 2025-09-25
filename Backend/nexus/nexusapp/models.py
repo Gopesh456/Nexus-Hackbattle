@@ -95,6 +95,34 @@ class MetabolicPanel(models.Model):
 		return f"Metabolic Panel - {self.user.username}"
 
 
+class LiverFunctionTest(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='liver_function_test')
+	
+	# Liver Function Test parameters
+	total_protein = models.CharField(max_length=50, blank=True, help_text="Total Protein level (e.g., '7.0 g/dL')")
+	albumin = models.CharField(max_length=50, blank=True, help_text="Albumin level (e.g., '4.5 g/dL')")
+	globulin = models.CharField(max_length=50, blank=True, help_text="Globulin level (e.g., '2.5 g/dL')")
+	ag_ratio = models.CharField(max_length=50, blank=True, help_text="A/G Ratio (e.g., '1.8')")
+	total_bilirubin = models.CharField(max_length=50, blank=True, help_text="Total Bilirubin level (e.g., '0.8 mg/dL')")
+	direct_bilirubin = models.CharField(max_length=50, blank=True, help_text="Direct Bilirubin level (e.g., '0.2 mg/dL')")
+	indirect_bilirubin = models.CharField(max_length=50, blank=True, help_text="Indirect Bilirubin level (e.g., '0.6 mg/dL')")
+	ast_sgot = models.CharField(max_length=50, blank=True, help_text="AST (SGOT) level (e.g., '25 U/L')")
+	alt_sgpt = models.CharField(max_length=50, blank=True, help_text="ALT (SGPT) level (e.g., '30 U/L')")
+	alkaline_phosphatase = models.CharField(max_length=50, blank=True, help_text="Alkaline Phosphatase level (e.g., '90 U/L')")
+	ggt = models.CharField(max_length=50, blank=True, help_text="GGT level (e.g., '20 U/L')")
+	
+	# Test metadata
+	test_date = models.DateField(blank=True, null=True, help_text="Date when the liver function test was conducted")
+	lab_name = models.CharField(max_length=255, blank=True, help_text="Name of the laboratory")
+	doctor_name = models.CharField(max_length=255, blank=True, help_text="Name of the ordering physician")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Liver Function Test - {self.user.username}"
+
+
 class UserNutritionGoals(models.Model):
 	"""Store user's daily nutrition goals"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='nutrition_goals')
