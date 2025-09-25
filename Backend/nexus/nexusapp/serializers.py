@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest
+from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
 from .models import FoodNutrition, UserNutritionGoals
 
 class UserSerializer(serializers.ModelSerializer):
@@ -85,6 +85,16 @@ class LiverFunctionTestSerializer(serializers.ModelSerializer):
             'total_protein', 'albumin', 'globulin', 'ag_ratio', 'total_bilirubin',
             'direct_bilirubin', 'indirect_bilirubin', 'ast_sgot', 'alt_sgpt', 
             'alkaline_phosphatase', 'ggt', 'test_date', 'lab_name', 'doctor_name'
+        )
+        read_only_fields = ('user',)
+
+
+class MedicationDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationDetails
+        fields = (
+            'medicine_name', 'frequency', 'medical_condition', 'no_of_pills', 
+            'next_order_date', 'meds_reminder'
         )
         read_only_fields = ('user',)
 

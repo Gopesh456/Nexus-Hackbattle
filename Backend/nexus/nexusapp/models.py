@@ -123,6 +123,24 @@ class LiverFunctionTest(models.Model):
 		return f"Liver Function Test - {self.user.username}"
 
 
+class MedicationDetails(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='medication_details')
+	
+	# Medication Details parameters
+	medicine_name = models.CharField(max_length=255, blank=True, help_text="Name of the medicine")
+	frequency = models.CharField(max_length=100, blank=True, help_text="Frequency of medication (e.g., 'Twice daily', '3 times a day')")
+	medical_condition = models.CharField(max_length=255, blank=True, help_text="Medical condition for which the medication is prescribed")
+	no_of_pills = models.CharField(max_length=50, blank=True, help_text="Number of pills or dosage (e.g., '1 tablet', '2 capsules')")
+	next_order_date = models.DateField(blank=True, null=True, help_text="Next order date in YYYY-MM-DD format")
+	meds_reminder = models.CharField(max_length=255, blank=True, help_text="Reminder notes or instructions for medication")
+	
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Medication Details - {self.user.username}"
+
+
 class UserNutritionGoals(models.Model):
 	"""Store user's daily nutrition goals"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='nutrition_goals')

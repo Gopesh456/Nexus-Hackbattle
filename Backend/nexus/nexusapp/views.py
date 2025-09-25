@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest
-from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer
+from .models import UserBasicData, UserHealthProfile, BloodTestReport, MetabolicPanel, LiverFunctionTest, MedicationDetails
+from .serializers import UserSerializer, UserBasicDataSerializer, UserHealthProfileSerializer, BloodTestReportSerializer, MetabolicPanelSerializer, LiverFunctionTestSerializer, MedicationDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
@@ -565,6 +565,103 @@ def get_liver_function_test(request):
     except LiverFunctionTest.DoesNotExist:
         return Response({
             'error': 'No liver function test found for this user'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def store_medication_details(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Map the input field names to database field names
+    field_mapping = {
+        'Medicine_name': 'medicine_name',
+        'Frequency': 'frequency',
+        'Medical_Condition': 'medical_condition',
+        'No_of_pills': 'no_of_pills',
+        'next_order_data': 'next_order_date',
+        'meds_reminder': 'meds_reminder'
+    }
+    
+    # Transform the request data to match database field names
+    transformed_data = request.data.copy()
+    for input_field, db_field in field_mapping.items():
+        if input_field in transformed_data:
+            transformed_data[db_field] = transformed_data.pop(input_field)
+    
+    # Check if user already has medication details
+    try:
+        medication = MedicationDetails.objects.get(user=user)
+        serializer = MedicationDetailsSerializer(medication, data=transformed_data, partial=True)
+    except MedicationDetails.DoesNotExist:
+        serializer = MedicationDetailsSerializer(data=transformed_data)
+    
+    if serializer.is_valid():
+        serializer.save(user=user)
+        return Response({
+            'message': 'Medication details stored successfully'
+        }, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_medication_details(request):
+    # Get token from request body
+    token = request.data.get('token')
+    
+    if not token:
+        return Response({
+            'error': 'Token is required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        # Validate JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(token)
+        
+        # Get user from token using Django's built-in method
+        user = jwt_auth.get_user(validated_token)
+        
+        if not user:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+    except Exception as e:
+        return Response({
+            'error': 'Invalid token provided'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        medication = MedicationDetails.objects.get(user=user)
+        serializer = MedicationDetailsSerializer(medication)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except MedicationDetails.DoesNotExist:
+        return Response({
+            'error': 'No medication details found for this user'
         }, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
